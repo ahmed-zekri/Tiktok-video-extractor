@@ -1,18 +1,10 @@
-import time
+import subprocess
 import tkinter as tk
 
 from TikTokApi import TikTokApi
-from googleapiclient.http import MediaFileUpload
 from numpy import long
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
-import subprocess
-
-from Google import Create_Service
 
 hashtag_input = None
 like_input = None
