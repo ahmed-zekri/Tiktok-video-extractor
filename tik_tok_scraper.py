@@ -38,9 +38,10 @@ def download_video(url, count, last_index=False, from_sample=False, name=None):
     #
     # if last_index:
     #     info.config(text=f"Downloading Finished {str(count)}")
+    print(f'{url} {name}')
     info.config(text=f"Downloading File {str(count + 1)}")
     subprocess.run([
-        'youtube-dl.exe', url, '--output', f'{name}.mp4'],
+        'youtube-dl.exe', url, '--output', f'{name.split("_")[0]}/{name}.mp4'],
         check=True, )
     if last_index:
         info.config(text=f"All downloads completed successfully")
@@ -64,11 +65,11 @@ def extract_videos():
                     opened_file.write(
                         f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}  ; Author: {video["author"]["uniqueId"]} \n')
                     videos_list.append(
-                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}')
+                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}')
     info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
     for count, video_item in enumerate(videos_list):
         download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
-                       name=f'{video_item.split("&&")[1]}_{video["author"]["uniqueId"]}_{video["video"]["id"]}')
+                       name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}')
 
 
 def tkinter_create_window():
