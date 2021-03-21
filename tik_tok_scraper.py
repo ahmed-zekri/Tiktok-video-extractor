@@ -2,14 +2,41 @@ import time
 import tkinter as tk
 
 from TikTokApi import TikTokApi
+from googleapiclient.http import MediaFileUpload
+from numpy import long
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 import subprocess
 
+from Google import Create_Service
+
 hashtag_input = None
 like_input = None
 browser = None
+service = None
 info = None
+Client_SECRET_FILE = 'client_secrets.json'
+API_NAME = 'drive'
+API_VERSION = 'v3'
+SCOPES = ['https://www.googleapis.com/auth/drive']
+folder_id = '1w5XyQKhXjyhwSGtB47HN2ulcOfxJ_iUG'
+
+
+def upload_video_to_drive(file):
+    print(f'Uploading {file.split("/")[1]} to google drive please wait')
+    # To create a new folder
+
+    folder = drive.CreateFile({'title': file.split('/')[0], 'mimeType': 'application/vnd.google-apps.folder'})
+    folder.Upload()
+    file1 = drive.CreateFile({'title': file.split('/')[1], 'parents': [{'id': folder['id']}]})
+    file1.SetContentFile(file)
+    file1.Upload()  # Files.insert()
+
+    print(f'File {file.split("/")[1]} uploaded successfully')
 
 
 def download_video(url, count, last_index=False, from_sample=False, name=None):
@@ -43,6 +70,7 @@ def download_video(url, count, last_index=False, from_sample=False, name=None):
     subprocess.run([
         'youtube-dl.exe', url, '--output', f'{name.split("_")[0]}/{name}.mp4'],
         check=True, )
+    upload_video_to_drive(f'{name.split("_")[0]}/{name}.mp4')
     if last_index:
         info.config(text=f"All downloads completed successfully")
 
@@ -65,8 +93,9 @@ def extract_videos():
                     opened_file.write(
                         f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}  ; Author: {video["author"]["uniqueId"]} \n')
                     videos_list.append(
-                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}')
+                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
     info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
+    videos_list.sort(key=lambda x: long(x.split('&&')[4]), reverse=True)
     for count, video_item in enumerate(videos_list):
         download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
                        name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}')
@@ -122,6 +151,33 @@ def tkinter_create_window():
 
 
 if __name__ == '__main__':
+    # service = Create_Service(Client_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
+    gauth = GoogleAuth()
+    gauth.LocalWebserverAuth()
+
+    drive = GoogleDrive(gauth)
+
+    # file1['title'] = 'HelloWorld.txt'  # Change title of the file
+    # file1.Upload() # Files.patch()
+    #
+    # content = file1.GetContentString()  # 'Hello'
+    # file1.SetContentString(content+' World!')  # 'Hello World!'
+    # file1.Upload() # Files.update()
+    #
+    # file2 = drive.CreateFile()
+    # file2.SetContentFile('hello.png')
+    # file2.Upload()
+    # print('Created file %s with mimeType %s' % (file2['title'],
+    #                                             file2['mimeType']))
+    # # Created file hello.png with mimeType image/png
+    #
+    # file3 = drive.CreateFile({'id': file2['id']})
+    # print('Downloading file %s from Google Drive' % file3['title']) # 'hello.png'
+    # file3.GetContentFile('world.png')  # Save Drive file as a local file
+
+    # or download Google Docs files in an export format provided.
+    # downloading a docs document as an html file:
+
     # Initialize selenium
     # initialize_selinuim()
 
