@@ -11,7 +11,9 @@ browser = None
 info = None
 
 
-def download_video(url, count, last_index=False, from_sample=False):
+def download_video(url, count, last_index=False, from_sample=False, name=None):
+    if name is not None:
+        print(name)
     browser.get('https://snaptik.app/')
     text_url = browser.find_element_by_id('url')
     if info is not None:
@@ -53,12 +55,13 @@ def extract_videos():
             for video in videos:
                 if video['stats']['diggCount'] > int(like_input.get()):
                     opened_file.write(
-                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}  ; Author: {video["author"]["nickname"]} \n')
+                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}  ; Author: {video["author"]["uniqueId"]} \n')
                     videos_list.append(
-                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}')
+                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}')
     info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
     for count, video_item in enumerate(videos_list):
-        download_video(video_item, count, last_index=(count == len(videos_list) - 1))
+        download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
+                       name=f'{video_item.split("&&")[1]}_{video["author"]["uniqueId"]}_{video["video"]["id"]}')
 
 
 def tkinter_create_window():
