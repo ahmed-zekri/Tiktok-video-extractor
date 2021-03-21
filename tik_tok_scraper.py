@@ -15,16 +15,25 @@ Client_SECRET_FILE = 'client_secrets.json'
 API_NAME = 'drive'
 API_VERSION = 'v3'
 SCOPES = ['https://www.googleapis.com/auth/drive']
-folder_id = '1w5XyQKhXjyhwSGtB47HN2ulcOfxJ_iUG'
 
 
 def upload_video_to_drive(file):
+    id_folder = None
     print(f'Uploading {file.split("/")[1]} to google drive please wait')
     # To create a new folder
+    folders = drive.ListFile({"q": "mimeType='application/vnd.google-apps.folder' and trashed=false"}).GetList()
+    for folder in folders:
+        if folder['title'] == file.split('/')[0]:
+            id_folder = folder['id']
+            break
 
-    folder = drive.CreateFile({'title': file.split('/')[0], 'mimeType': 'application/vnd.google-apps.folder'})
-    folder.Upload()
-    file1 = drive.CreateFile({'title': file.split('/')[1], 'parents': [{'id': folder['id']}]})
+    if id_folder is None:
+        new_folder = drive.CreateFile(
+            {'title': file.split('/')[0], 'mimeType': 'application/vnd.google-apps.folder'})
+        new_folder.Upload()
+        id_folder = new_folder['id']
+
+    file1 = drive.CreateFile({'title': file.split('/')[1], 'parents': [{'id': id_folder}]})
     file1.SetContentFile(file)
     file1.Upload()  # Files.insert()
 
