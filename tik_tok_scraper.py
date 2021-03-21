@@ -1,10 +1,14 @@
+import pathlib
 import subprocess
 import tkinter as tk
 
+import dropbox as dropbox
+
 from TikTokApi import TikTokApi
-from numpy import long
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+
+# from pydrive.auth import GoogleAuth
+# from pydrive.drive import GoogleDrive
+
 
 hashtag_input = None
 like_input = None
@@ -18,26 +22,50 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 
 
 def upload_video_to_drive(file):
-    id_folder = None
-    print(f'Uploading {file.split("/")[1]} to google drive please wait')
-    # To create a new folder
-    folders = drive.ListFile({"q": "mimeType='application/vnd.google-apps.folder' and trashed=false"}).GetList()
-    for folder in folders:
-        if folder['title'] == file.split('/')[0]:
-            id_folder = folder['id']
-            break
+    # id_folder = None
+    # print(f'Uploading {file.split("/")[1]} to google drive please wait')
+    # # To create a new folder
+    # folders = drive.ListFile({"q": "mimeType='application/vnd.google-apps.folder' and trashed=false"}).GetList()
+    # for folder in folders:
+    #     if folder['title'] == file.split('/')[0]:
+    #         id_folder = folder['id']
+    #         break
+    #
+    # if id_folder is None:
+    #     new_folder = drive.CreateFile(
+    #         {'title': file.split('/')[0], 'mimeType': 'application/vnd.google-apps.folder'})
+    #     new_folder.Upload()
+    #     id_folder = new_folder['id']
+    #
+    # file1 = drive.CreateFile({'title': file.split('/')[1], 'parents': [{'id': id_folder}]})
+    # file1.SetContentFile(file)
+    # file1.Upload()  # Files.insert()
+    #
+    # print(f'File {file.split("/")[1]} uploaded successfully')
+    # file name
+    # path object, defining the file
 
-    if id_folder is None:
-        new_folder = drive.CreateFile(
-            {'title': file.split('/')[0], 'mimeType': 'application/vnd.google-apps.folder'})
-        new_folder.Upload()
-        id_folder = new_folder['id']
+    # target location in Dropbox
+    target = "/"  # the target folder
+    # the target path and file name
 
-    file1 = drive.CreateFile({'title': file.split('/')[1], 'parents': [{'id': id_folder}]})
-    file1.SetContentFile(file)
-    file1.Upload()  # Files.insert()
+    # Create a dropbox object using an API v2 key
 
-    print(f'File {file.split("/")[1]} uploaded successfully')
+    # open the file and upload it
+    with open(file, "rb") as f:
+        # upload gives you metadata about the file
+        # we want to overwite any previous version of the file
+        d.files_upload(f.read(), f'/{file}', mute=True)
+
+    # create a shared link
+    # link = d.sharing_create_shared_link(targetfile)
+
+    # url which can be shared
+    # url = link.url
+
+    # link which directly downloads by replacing ?dl=0 with ?dl=1
+    # dl_url = re.sub(r"\?dl\=0", "?dl=1", url)
+    # print(dl_url)
 
 
 def download_video(url, count, last_index=False, from_sample=False, name=None):
@@ -72,6 +100,7 @@ def download_video(url, count, last_index=False, from_sample=False, name=None):
         'youtube-dl.exe', url, '--output', f'{name.split("_")[0]}/{name}.mp4'],
         check=True, )
     upload_video_to_drive(f'{name.split("_")[0]}/{name}.mp4')
+
     if last_index:
         info.config(text=f"All downloads completed successfully")
 
@@ -96,7 +125,7 @@ def extract_videos():
                     videos_list.append(
                         f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
     info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
-    videos_list.sort(key=lambda x: long(x.split('&&')[4]), reverse=True)
+    videos_list.sort(key=lambda x: int(x.split('&&')[4]), reverse=True)
     for count, video_item in enumerate(videos_list):
         download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
                        name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}')
@@ -152,11 +181,13 @@ def tkinter_create_window():
 
 
 if __name__ == '__main__':
+    d = dropbox.Dropbox(
+        'Csfu5DtEWEUAAAAAAAAAAfmngEjCPapntTfzXPVLdry_30jdWSrbxGhc7bhL46n5')
     # service = Create_Service(Client_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
-    gauth = GoogleAuth()
-    gauth.LocalWebserverAuth()
-
-    drive = GoogleDrive(gauth)
+    # gauth = GoogleAuth()
+    # gauth.LocalWebserverAuth()
+    #
+    # drive = GoogleDrive(gauth)
 
     # file1['title'] = 'HelloWorld.txt'  # Change title of the file
     # file1.Upload() # Files.patch()
