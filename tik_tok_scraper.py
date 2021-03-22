@@ -23,7 +23,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 
 def upload_video_to_drive(file):
     # id_folder = None
-    # print(f'Uploading {file.split("/")[1]} to google drive please wait')
+    print(f'Uploading {file.split("/")[1]} to dropbox please wait')
     # # To create a new folder
     # folders = drive.ListFile({"q": "mimeType='application/vnd.google-apps.folder' and trashed=false"}).GetList()
     # for folder in folders:
@@ -56,6 +56,7 @@ def upload_video_to_drive(file):
         # upload gives you metadata about the file
         # we want to overwite any previous version of the file
         d.files_upload(f.read(), f'/{file}', mute=True)
+    print(f'File {file.split("/")[1]} uploaded successfully')
 
     # create a shared link
     # link = d.sharing_create_shared_link(targetfile)
@@ -182,7 +183,7 @@ def tkinter_create_window():
 
 if __name__ == '__main__':
     d = dropbox.Dropbox(
-        'Csfu5DtEWEUAAAAAAAAAAfmngEjCPapntTfzXPVLdry_30jdWSrbxGhc7bhL46n5')
+        'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct')
     # service = Create_Service(Client_SECRET_FILE, API_NAME, API_VERSION, SCOPES)
     # gauth = GoogleAuth()
     # gauth.LocalWebserverAuth()
