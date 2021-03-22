@@ -3,7 +3,7 @@ import pathlib
 import subprocess
 import time
 import tkinter as tk
-
+import concurrent.futures
 import dropbox as dropbox
 import requests
 
@@ -73,10 +73,25 @@ def upload_video_to_drive(file):
     # print(dl_url)
 
 
+def timer(time_count, current_time):
+    printed_time = 0
+    while True:
+        if printed_time != int(time.perf_counter() - current_time):
+            printed_time = int(time.perf_counter() - current_time)
+            print(printed_time)
+
+        if printed_time >= time_count:
+            break
+
+
 def download_video(url, count, last_index=False, from_sample=False, name=None):
     if name is not None:
-        print(name)
+        print(f'Attempting to download {name}')
     browser.get('https://ssstik.io/')
+    print('Waiting for 8 seconds this is necessary to avoid server ban ')
+    current_time = time.perf_counter()
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(timer, 8, current_time)
     time.sleep(8)
     text_url = browser.find_element_by_id('main_page_text')
     if info is not None:
@@ -86,6 +101,11 @@ def download_video(url, count, last_index=False, from_sample=False, name=None):
 
     text_submit = browser.find_element_by_id('submit')
     text_submit.click()
+    print('Submit button clicked ')
+    print('Waiting for 8 seconds this is necessary to avoid server ban ')
+    current_time = time.perf_counter()
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(timer, 8, current_time)
     time.sleep(8)
 
     while True:
@@ -99,7 +119,12 @@ def download_video(url, count, last_index=False, from_sample=False, name=None):
     main_handler = browser.current_window_handle
     if from_sample:
         return
+    print('Waiting for 3 seconds this is necessary to avoid server ban ')
+    current_time = time.perf_counter()
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(timer, 3, current_time)
     time.sleep(3)
+
     for handle in browser.window_handles:
         if handle != browser.current_window_handle:
             browser.switch_to.window(handle)
@@ -109,14 +134,14 @@ def download_video(url, count, last_index=False, from_sample=False, name=None):
             browser.switch_to.window(main_handler)
 
             break
-    print(f'Video found downloading {video_url} please wait')
+    print(f'Video found downloading {name} please wait')
     r = requests.get(video_url, allow_redirects=True)
     if not os.path.exists(f'{name.split("_")[0]}'):
         os.makedirs(f'{name.split("_")[0]}')
     with open(f'{name.split("_")[0]}/{name}.mp4', "wb") as f:
         f.write(r.content)
 
-    print(f'File downloaded sucessfully')
+    print(f'{str(count + 1)} File(s) downloaded sucessfully')
     upload_video_to_drive(f'{name.split("_")[0]}/{name}.mp4')
 
     if last_index:
