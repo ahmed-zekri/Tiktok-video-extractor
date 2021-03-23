@@ -6,7 +6,7 @@ import tkinter as tk
 import concurrent.futures
 import dropbox as dropbox
 import requests
-
+from datetime import datetime
 from TikTokApi import TikTokApi
 from selenium import webdriver
 # from pydrive.auth import GoogleAuth
@@ -17,6 +17,7 @@ from selenium.webdriver.firefox.options import Options
 hashtag_input = None
 like_input = None
 browser = None
+days_input = None
 service = None
 info = None
 Client_SECRET_FILE = 'client_secrets.json'
@@ -144,8 +145,6 @@ def download_video(url, count, last_index=False, from_sample=False, name=None):
     print(f'{str(count + 1)} File(s) downloaded sucessfully')
     upload_video_to_drive(f'{name.split("_")[0]}/{name}.mp4')
 
-    if last_index:
-        info.config(text=f"Downloading Finished {str(count)}")
     # print(f'{url} {name}')
 
     # info.config(text=f"Downloading File {str(count + 1)}")
@@ -160,31 +159,50 @@ def download_video(url, count, last_index=False, from_sample=False, name=None):
 
 def extract_videos():
     global info
+    global days_input
+    days_allowed = 10000
+    try:
+        days_allowed = int(days_input.get())
+    except:
+        pass
     info.config(text=f"Exporting videos info to a txt file, this will take a moment")
     videos_list = []
     hashtags_list = hashtag_input.get().split(',')
     # Hashtag_search
     for hashtag in hashtags_list:
 
-        videos = api.byHashtag(hashtag, count=100)
+        videos = api.byHashtag(hashtag)
         if len(videos) == 0:
             return
             # loop through the videos
         with open('ticktock.txt', 'w', encoding="utf-8") as opened_file:
             for video in videos:
-                if video['stats']['diggCount'] > int(like_input.get()):
-                    opened_file.write(
-                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}  ; Author: {video["author"]["uniqueId"]} \n')
+                days_since_creation = (datetime.now() - datetime.fromtimestamp(video['createTime'])).days
+                if int(days_since_creation <= days_allowed):
+                    if video['stats']['diggCount'] > int(like_input.get()):
+                        opened_file.write(
+                            f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}  ; Author: {video["author"]["uniqueId"]} \n')
                     videos_list.append(
                         f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
+
+    print(
+        f'{len(videos_list)} videos found uploaded in the recent {str(days_allowed)} day(s) with minimum likes {like_input.get()}')
+
     info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
     videos_list.sort(key=lambda x: int(x.split('&&')[4]), reverse=True)
     for count, video_item in enumerate(videos_list):
         download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
                        name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}')
+    if len(videos_list) > 0:
+        info.config(text=f"Downloading Finished,Downloaded {len(videos_list)}")
+        print(f"Downloading Finished,Downloaded {len(videos_list)}")
+    else:
+        print(f"No video found matching your criteria")
+        info.config(f"No video found matching your criteria")
 
 
 def tkinter_create_window():
+    global days_input
     global hashtag_input
     global like_input
     global info
@@ -201,6 +219,10 @@ def tkinter_create_window():
     likes_label = tk.Label(text="Minimum likes")
     # Minimum likes Input
     like_input = tk.Entry()
+    # Minimum days label
+    days_label = tk.Label(text="Specify the number of days allowed since video uploaded")
+    # Minimum days Input
+    days_input = tk.Entry()
     # Extract data button
     button = tk.Button(text="Extract videos", command=extract_videos)
     info = tk.Label(text="", fg='#0000CD')
@@ -211,6 +233,8 @@ def tkinter_create_window():
     hashtag_input.pack()
     likes_label.pack()
     like_input.pack()
+    days_label.pack()
+    days_input.pack()
     button.pack(pady=10, side=tk.TOP)
     # error.pack(pady=5, side=tk.TOP)
     # info2.pack(pady=7, side=tk.TOP)
