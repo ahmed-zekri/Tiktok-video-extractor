@@ -87,7 +87,7 @@ def timer(time_count, current_time):
 
 def download_video(url, count, last_index=False, from_sample=False, name=None):
     if name is not None:
-        print(f'Attempting to download {name}')
+        print(f'Attempting to download {name}, {count} videos downloaded so far')
     browser.get('https://ssstik.io/')
     print('Waiting for 8 seconds this is necessary to avoid server ban ')
     current_time = time.perf_counter()
@@ -170,8 +170,10 @@ def extract_videos():
     hashtags_list = hashtag_input.get().split(',')
     # Hashtag_search
     for hashtag in hashtags_list:
+        print(f'extracting 2000 videos with hashtag \"{hashtag}\" please wait this will take 1 minute approximately')
 
-        videos = api.byHashtag(hashtag)
+        videos = api.byHashtag(hashtag, count=2000)
+
         if len(videos) == 0:
             return
             # loop through the videos
@@ -198,7 +200,7 @@ def extract_videos():
         print(f"Downloading Finished,Downloaded {len(videos_list)}")
     else:
         print(f"No video found matching your criteria")
-        info.config(f"No video found matching your criteria")
+        info.config(text=f"No video found matching your criteria")
 
 
 def tkinter_create_window():
