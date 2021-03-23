@@ -6,6 +6,7 @@ __pycache__/
 *.mp4
 *.part
 Include/
+*.rar
 Scripts/
 pyvenv.cfg
 # C extensions
