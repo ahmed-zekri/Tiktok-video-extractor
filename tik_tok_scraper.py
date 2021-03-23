@@ -170,9 +170,9 @@ def extract_videos():
     hashtags_list = hashtag_input.get().split(',')
     # Hashtag_search
     for hashtag in hashtags_list:
-        print(f'extracting 2000 videos with hashtag \"{hashtag}\" please wait this will take 1 minute approximately')
+        print(f'extracting 500 videos with hashtag \"{hashtag}\" please wait this will take 1 minute approximately')
 
-        videos = api.byHashtag(hashtag, count=2000)
+        videos = api.byHashtag(hashtag, count=500)
 
         if len(videos) == 0:
             return
