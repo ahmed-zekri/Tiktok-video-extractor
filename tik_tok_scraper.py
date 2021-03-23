@@ -4,6 +4,8 @@ import subprocess
 import time
 import tkinter as tk
 import concurrent.futures
+from tkinter.ttk import Checkbutton, Radiobutton
+
 import dropbox as dropbox
 import requests
 from datetime import datetime
@@ -20,6 +22,7 @@ browser = None
 days_input = None
 service = None
 info = None
+r = None
 Client_SECRET_FILE = 'client_secrets.json'
 API_NAME = 'drive'
 API_VERSION = 'v3'
@@ -28,7 +31,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 
 def upload_video_to_drive(file):
     # id_folder = None
-    print(f'Uploading {file.split("/")[1]} to dropbox please wait')
+    print(f'[Upload] Uploading {file.split("/")[1]} to dropbox please wait')
     # # To create a new folder
     # folders = drive.ListFile({"q": "mimeType='application/vnd.google-apps.folder' and trashed=false"}).GetList()
     # for folder in folders:
@@ -85,79 +88,87 @@ def timer(time_count, current_time):
             break
 
 
-def download_video(url, count, last_index=False, from_sample=False, name=None):
+def download_video(url, count, last_index=False, from_sample=False, name=None, for_you=False):
     if name is not None:
         print(f'Attempting to download {name}, {count} videos downloaded so far')
-    browser.get('https://ssstik.io/')
-    print('Waiting for 8 seconds this is necessary to avoid server ban ')
-    current_time = time.perf_counter()
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(timer, 8, current_time)
-    time.sleep(8)
-    text_url = browser.find_element_by_id('main_page_text')
-    if info is not None:
-        info.config(text=f"Downloading video number {str(count)} please wait ...")
-
-    text_url.send_keys(url)
-
-    text_submit = browser.find_element_by_id('submit')
-    text_submit.click()
-    print('Submit button clicked ')
-    print('Waiting for 8 seconds this is necessary to avoid server ban ')
-    current_time = time.perf_counter()
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(timer, 8, current_time)
-    time.sleep(8)
-
-    while True:
-        try:
-            browser.find_elements_by_xpath("//*[contains(text(), 'Without watermark [2]')]")[0].click()
-
-            # browser.find_element_by_xpath('//*[@title="Download Server 02"]').click()
-            break
-        except NoSuchElementException:
-            pass
-    main_handler = browser.current_window_handle
-    if from_sample:
-        return
-    print('Waiting for 3 seconds this is necessary to avoid server ban ')
-    current_time = time.perf_counter()
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(timer, 3, current_time)
-    time.sleep(3)
-
-    for handle in browser.window_handles:
-        if handle != browser.current_window_handle:
-            browser.switch_to.window(handle)
-            video_url = browser.current_url
-
-            browser.close()
-            browser.switch_to.window(main_handler)
-
-            break
-    print(f'Video found downloading {name} please wait')
-    r = requests.get(video_url, allow_redirects=True)
-    if not os.path.exists(f'{name.split("_")[0]}'):
-        os.makedirs(f'{name.split("_")[0]}')
-    with open(f'{name.split("_")[0]}/{name}.mp4', "wb") as f:
-        f.write(r.content)
-
-    print(f'{str(count + 1)} File(s) downloaded sucessfully')
-    upload_video_to_drive(f'{name.split("_")[0]}/{name}.mp4')
+    # browser.get('https://ssstik.io/')
+    # print('Waiting for 8 seconds this is necessary to avoid server ban ')
+    # current_time = time.perf_counter()
+    # with concurrent.futures.ThreadPoolExecutor() as executor:
+    #     executor.submit(timer, 8, current_time)
+    # time.sleep(8)
+    # text_url = browser.find_element_by_id('main_page_text')
+    # if info is not None:
+    #     info.config(text=f"Downloading video number {str(count)} please wait ...")
+    #
+    # text_url.send_keys(url)
+    #
+    # text_submit = browser.find_element_by_id('submit')
+    # text_submit.click()
+    # print('Submit button clicked ')
+    # print('Waiting for 8 seconds this is necessary to avoid server ban ')
+    # current_time = time.perf_counter()
+    # with concurrent.futures.ThreadPoolExecutor() as executor:
+    #     executor.submit(timer, 8, current_time)
+    # time.sleep(8)
+    #
+    # while True:
+    #     try:
+    #         browser.find_elements_by_xpath("//*[contains(text(), 'Without watermark [2]')]")[0].click()
+    #
+    #         # browser.find_element_by_xpath('//*[@title="Download Server 02"]').click()
+    #         break
+    #     except NoSuchElementException:
+    #         pass
+    # main_handler = browser.current_window_handle
+    # if from_sample:
+    #     return
+    # print('Waiting for 3 seconds this is necessary to avoid server ban ')
+    # current_time = time.perf_counter()
+    # with concurrent.futures.ThreadPoolExecutor() as executor:
+    #     executor.submit(timer, 3, current_time)
+    # time.sleep(3)
+    #
+    # for handle in browser.window_handles:
+    #     if handle != browser.current_window_handle:
+    #         browser.switch_to.window(handle)
+    #         video_url = browser.current_url
+    #
+    #         browser.close()
+    #         browser.switch_to.window(main_handler)
+    #
+    #         break
+    # print(f'Video found downloading {name} please wait')
+    # r = requests.get(video_url, allow_redirects=True)
+    # if not os.path.exists(f'{name.split("_")[0]}'):
+    #     os.makedirs(f'{name.split("_")[0]}')
+    # with open(f'{name.split("_")[0]}/{name}.mp4', "wb") as f:
+    #     f.write(r.content)
+    #
+    # print(f'{str(count + 1)} File(s) downloaded sucessfully')
+    # upload_video_to_drive(f'{name.split("_")[0]}/{name}.mp4')
 
     # print(f'{url} {name}')
+    if for_you:
+        file_name = f'For_you/{name}.mp4'
+    else:
+        file_name = f'{name.split("_")[0]}/{name}.mp4'
+    info.config(text=f"Downloading File {str(count + 1)}")
+    subprocess.run([
+        'youtube-dl.exe', url, '--output', file_name],
+        check=True, )
+    upload_video_to_drive(file_name)
 
-    # info.config(text=f"Downloading File {str(count + 1)}")
-    # subprocess.run([
-    #     'youtube-dl.exe', url, '--output', f'{name.split("_")[0]}/{name}.mp4'],
-    #     check=True, )
-    # upload_video_to_drive(f'{name.split("_")[0]}/{name}.mp4')
-    #
-    # if last_index:
-    #     info.config(text=f"All downloads completed successfully")
+    if last_index:
+        info.config(text=f"All downloads completed successfully")
 
 
 def extract_videos():
+    if r.get() == 1:
+        print('selected recent option')
+    else:
+        print('selected for you option')
+
     global info
     global days_input
     days_allowed = 10000
@@ -170,9 +181,16 @@ def extract_videos():
     hashtags_list = hashtag_input.get().split(',')
     # Hashtag_search
     for hashtag in hashtags_list:
-        print(f'extracting 500 videos with hashtag \"{hashtag}\" please wait this will take 1 minute approximately')
-
-        videos = api.byHashtag(hashtag, count=500)
+        time.sleep(3)
+        if r.get() == 1:
+            print(
+                f'extracting 500 videos with hashtag \"{hashtag}\" please wait this will take 20 seconds approximately')
+        else:
+            print(f'Extracting 500 videos for you please wait for 20 sec approximately')
+        if r.get() == 1:
+            videos = api.byHashtag(hashtag, count=500)
+        else:
+            videos = api.trending(count=500)
 
         if len(videos) == 0:
             return
@@ -188,13 +206,17 @@ def extract_videos():
                         f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
 
     print(
-        f'{len(videos_list)} videos found uploaded in the recent {str(days_allowed)} day(s) with minimum likes {like_input.get()}')
-
+        f'{len(videos_list)} videos found uploaded in the recent {str(days_allowed)} day(s) with minimum likes {like_input.get()} matching your hashtags')
+    if r.get() == 1:
+        for_you = False
+    else:
+        for_you = True
     info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
     videos_list.sort(key=lambda x: int(x.split('&&')[4]), reverse=True)
     for count, video_item in enumerate(videos_list):
         download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
-                       name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}')
+                       name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}',
+                       for_you=for_you)
     if len(videos_list) > 0:
         info.config(text=f"Downloading Finished,Downloaded {len(videos_list)}")
         print(f"Downloading Finished,Downloaded {len(videos_list)}")
@@ -208,6 +230,7 @@ def tkinter_create_window():
     global hashtag_input
     global like_input
     global info
+    global r
     window = tk.Tk()
     # window initialisation
     window.geometry("350x200")
@@ -225,6 +248,10 @@ def tkinter_create_window():
     days_label = tk.Label(text="Specify the number of days allowed since video uploaded")
     # Minimum days Input
     days_input = tk.Entry()
+    r = tk.IntVar()
+    for_you = Radiobutton(window, text="For you", variable=r, value=2,
+                          )
+
     # Extract data button
     button = tk.Button(text="Extract videos", command=extract_videos)
     info = tk.Label(text="", fg='#0000CD')
@@ -237,13 +264,20 @@ def tkinter_create_window():
     like_input.pack()
     days_label.pack()
     days_input.pack()
+
+    recent_days = Radiobutton(window, text="By Hashtags", variable=r, value=1,
+                              )
+
+    recent_days.pack()
+    for_you.pack()
     button.pack(pady=10, side=tk.TOP)
     # error.pack(pady=5, side=tk.TOP)
     # info2.pack(pady=7, side=tk.TOP)
-    info.pack(pady=5, side=tk.TOP)
+    # info.pack(pady=5, side=tk.TOP)
 
     window.resizable(False, False)
     window.attributes("-topmost", True)
+    r.set(1)
     window.mainloop()
 
 
@@ -297,7 +331,7 @@ if __name__ == '__main__':
     # downloading a docs document as an html file:
 
     # Initialize selenium
-    initialize_selinuim()
+    # initialize_selinuim()
 
     # initialize tiktok api
     api = TikTokApi.get_instance()
