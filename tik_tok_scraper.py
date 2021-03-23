@@ -165,7 +165,7 @@ def download_video(url, count, last_index=False, from_sample=False, name=None, f
 
 def extract_videos():
     if r.get() == 1:
-        print('selected recent option')
+        print('selected hashtag option')
     else:
         print('selected for you option')
 
@@ -178,7 +178,10 @@ def extract_videos():
         pass
     info.config(text=f"Exporting videos info to a txt file, this will take a moment")
     videos_list = []
-    hashtags_list = hashtag_input.get().split(',')
+    if r.get() == 1:
+        hashtags_list = hashtag_input.get().split(',')
+    else:
+        hashtags_list = ['forYou']
     # Hashtag_search
     for hashtag in hashtags_list:
         time.sleep(3)
@@ -206,7 +209,7 @@ def extract_videos():
                         f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
 
     print(
-        f'{len(videos_list)} videos found uploaded in the recent {str(days_allowed)} day(s) with minimum likes {like_input.get()} matching your hashtags')
+        f'{len(videos_list)} videos found uploaded in the recent {str(days_allowed)} day(s) with minimum likes {like_input.get()}')
     if r.get() == 1:
         for_you = False
     else:
