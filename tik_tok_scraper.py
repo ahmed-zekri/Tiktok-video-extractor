@@ -27,6 +27,8 @@ Client_SECRET_FILE = 'client_secrets.json'
 API_NAME = 'drive'
 API_VERSION = 'v3'
 SCOPES = ['https://www.googleapis.com/auth/drive']
+maximum_videos_to_extract = 10000
+step_increment = 500
 
 
 def upload_video_to_drive(file):
@@ -164,6 +166,7 @@ def download_video(url, count, last_index=False, from_sample=False, name=None, f
 
 
 def extract_videos():
+    videos = []
     if r.get() == 1:
         print('selected hashtag option')
     else:
@@ -187,13 +190,33 @@ def extract_videos():
         time.sleep(3)
         if r.get() == 1:
             print(
-                f'extracting 500 videos with hashtag \"{hashtag}\" please wait this will take 20 seconds approximately')
+                f'extracting videos with hashtag \"{hashtag}\" this will take a couple of minutes')
         else:
-            print(f'Extracting 500 videos for you please wait for 20 sec approximately')
+            print(f'Extracting videos for you please wait ')
+        retries = 1
+        tiktok_hang = False
         if r.get() == 1:
-            videos = api.byHashtag(hashtag, count=500)
+            for _ in range(int(maximum_videos_to_extract / step_increment) + 1):
+                if tiktok_hang:
+                    break
+                while True:
+                    try:
+                        videos.extend(api.byHashtag(hashtag=hashtag, offset=step_increment * _, count=step_increment))
+                        break
+                    except Exception as e:
+                        print(e)
+
+                        print(f'Error retrying {retries}')
+                        retries += 1
+                        if (retries == 5):
+                            print(f'Tried {retries} times, exiting now')
+                            tiktok_hang = True
+                            break
+
+                        time.sleep(5)
+                print(f'{len(videos)} videos extracted from {maximum_videos_to_extract}')
         else:
-            videos = api.trending(count=500)
+            videos = api.trending()
 
         if len(videos) == 0:
             return
@@ -202,7 +225,7 @@ def extract_videos():
             for video in videos:
                 days_since_creation = (datetime.now() - datetime.fromtimestamp(video['createTime'])).days
                 if int(days_since_creation <= days_allowed):
-                    if video['stats']['diggCount'] > int(like_input.get()):
+                    if float(video['stats']['diggCount']) > float(like_input.get()):
                         opened_file.write(
                             f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}  ; Author: {video["author"]["uniqueId"]} \n')
                     videos_list.append(
@@ -337,7 +360,9 @@ if __name__ == '__main__':
     # initialize_selinuim()
 
     # initialize tiktok api
-    api = TikTokApi.get_instance()
+
+    api = TikTokApi.get_instance(use_test_endpoints=True,
+                       )
     # api.get_Video_By_DownloadURL("https://www.tiktok.com/@bouhmid576/video/6940552531063950598")
 
     # Create Ui
