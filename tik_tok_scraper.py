@@ -22,7 +22,7 @@ browser = None
 days_input = None
 service = None
 info = None
-r = None
+method_radio_button = None
 Client_SECRET_FILE = 'client_secrets.json'
 API_NAME = 'drive'
 API_VERSION = 'v3'
@@ -167,11 +167,16 @@ def download_video(url, count, last_index=False, from_sample=False, name=None, f
 
 
 def extract_videos():
-    videos = []
-    if r.get() == 1:
+    # All extracted videos
+    all_extracted_videos = []
+    # Number of retries when error encountered
+    retries = 1
+    if method_radio_button.get() == 1:
         print('selected hashtag option')
+        for_you = False
     else:
         print('selected for you option')
+        for_you = True
 
     global info
     global days_input
@@ -182,65 +187,85 @@ def extract_videos():
         pass
     info.config(text=f"Exporting videos info to a txt file, this will take a moment")
     videos_list = []
-    if r.get() == 1:
+    if method_radio_button.get() == 1:
         hashtags_list = hashtag_input.get().split(',')
     else:
         hashtags_list = ['forYou']
     # Hashtag_search
-    for hashtag in hashtags_list:
-        hashtag_videos = []
+    for _, hashtag in enumerate(hashtags_list):
+        hashtag = hashtag.split()
+        one_hashtag_videos = []
         time.sleep(3)
-        if r.get() == 1:
+        if not for_you:
             print(
                 f'extracting videos with hashtag \"{hashtag}\" this will take a couple of minutes')
         else:
             print(f'Extracting videos for you please wait ')
-        retries = 1
+
         tiktok_hang = False
         proxy_index = 0
-        if r.get() == 1:
+        # Hashtag section
+        if method_radio_button.get() == 1:
 
             for _ in range(int(maximum_videos_to_extract / step_increment) + 1):
 
+                # loading Step increment value failed section
                 if tiktok_hang:
-                    print('Trying one last time without count')
-                    try:
-                        api = TikTokApi.get_instance(use_test_endpoints=True,
-                                                     proxy=proxies[proxy_index])
-                        previous_videos_length = len(hashtag_videos)
-                        hashtag_videos.extend(api.byHashtag(hashtag=hashtag, offset=len(hashtag_videos)))
-                        videos.extend(hashtag_videos)
-                        print(
-                            f'Last try Succeeded,  extracted last {str(len(hashtag_videos) - previous_videos_length)} videos, proceeding')
-                    except:
-                        print('Last try failed, proceeding')
-                    break
+                    print(
+                        f'Can\'t extract {step_increment} videos attempting to load less ')
+
+                    while True:
+                        try:
+                            api = TikTokApi.get_instance(use_test_endpoints=True,
+                                                         proxy=proxies[proxy_index])
+                            previous_videos_length = len(one_hashtag_videos)
+                            one_hashtag_videos.extend(api.byHashtag(hashtag=hashtag, offset=len(one_hashtag_videos)))
+
+                            proxy_index += 1
+                            if proxy_index == len(proxies):
+                                proxy_index = 0
+                            print(
+                                f'Loaded  {str(len(one_hashtag_videos) - previous_videos_length)} videos, proceeding')
+                        except:
+                            if _ == len(hashtags_list) - 1:
+                                print('Last try failed, finished extracting videos')
+                            else:
+                                print('Last try failed, proceeding to next hashtag')
+                            break
+
+                # Loading with step_increment value
                 while True:
 
                     try:
-                        print(f'Launching new session with proxy {proxies[proxy_index]} ')
+                        print(
+                            f'Launching new request to load {step_increment} videos from position {len(one_hashtag_videos)} with proxy {proxies[proxy_index]} ')
                         api = TikTokApi.get_instance(use_test_endpoints=True,
                                                      proxy=proxies[proxy_index])
-                        hashtag_videos = api.byHashtag(hashtag=hashtag, offset=step_increment * _, count=step_increment)
-                        videos.extend(hashtag_videos)
+                        one_hashtag_videos.extend(
+                            api.byHashtag(hashtag=hashtag, offset=len(one_hashtag_videos), count=step_increment))
+
                         proxy_index += 1
                         if proxy_index == len(proxies):
                             proxy_index = 0
                         break
                     except Exception as e:
+
+                        # Load failed trying for max reties time then forward to tiktok hang section
+                        print(f'Error retrying {str(retries)} of {str(max_retries)}')
                         proxy_index += 1
                         if proxy_index == len(proxies):
                             proxy_index = 0
-
-                        print(f'Error retrying {retries}')
 
                         if retries == max_retries:
                             print(f'Tried {retries} times, exiting now')
                             tiktok_hang = True
                             break
                         retries += 1
+
                         time.sleep(5)
-                print(f'{len(videos)} videos extracted from {maximum_videos_to_extract}')
+                all_extracted_videos.extend(one_hashtag_videos)
+                print(f'{len(all_extracted_videos)} videos extracted from {maximum_videos_to_extract}')
+        # For you section
         else:
 
             while True:
@@ -248,7 +273,7 @@ def extract_videos():
                     print(f'Trying with proxy {proxies[proxy_index]}')
                     api = TikTokApi.get_instance(use_test_endpoints=True,
                                                  proxy=proxies[proxy_index])
-                    videos = api.trending()
+                    all_extracted_videos = api.trending()
                     break
                 except:
 
@@ -257,16 +282,16 @@ def extract_videos():
                         proxy_index = 0
                     print(f'Failed ,Trying a session with proxy {proxies[proxy_index]}')
         # Extraction done, printing results
-        print(f'_____Extracted {len(videos)} so far')
+        print(f'_____Extracted {len(all_extracted_videos)} so far')
         time.sleep(5)
 
-        if len(videos) == 0:
+        if len(all_extracted_videos) == 0:
             print(f'No videos extracted from hashtags {hashtag}')
             return
         # Writing to file
         print(f'Write video info of hashtag {hashtag} to file')
         with open('ticktock.txt', 'w', encoding="utf-8") as opened_file:
-            for video in videos:
+            for video in all_extracted_videos:
                 days_since_creation = (datetime.now() - datetime.fromtimestamp(video['createTime'])).days
                 if int(days_since_creation <= days_allowed):
                     if float(video['stats']['diggCount']) > float(like_input.get()):
@@ -275,10 +300,6 @@ def extract_videos():
                     videos_list.append(
                         f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
 
-    if r.get() == 1:
-        for_you = False
-    else:
-        for_you = True
     info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
     videos_list.sort(key=lambda x: int(x.split('&&')[4]), reverse=True)
     for count, video_item in enumerate(videos_list):
@@ -301,7 +322,7 @@ def tkinter_create_window():
     global hashtag_input
     global like_input
     global info
-    global r
+    global method_radio_button
     window = tk.Tk()
     # window initialisation
     window.geometry("350x200")
@@ -319,8 +340,8 @@ def tkinter_create_window():
     days_label = tk.Label(text="Specify the number of days allowed since video uploaded")
     # Minimum days Input
     days_input = tk.Entry()
-    r = tk.IntVar()
-    for_you = Radiobutton(window, text="For you", variable=r, value=2,
+    method_radio_button = tk.IntVar()
+    for_you = Radiobutton(window, text="For you", variable=method_radio_button, value=2,
                           )
 
     # Extract data button
@@ -336,7 +357,7 @@ def tkinter_create_window():
     days_label.pack()
     days_input.pack()
 
-    recent_days = Radiobutton(window, text="By Hashtags", variable=r, value=1,
+    recent_days = Radiobutton(window, text="By Hashtags", variable=method_radio_button, value=1,
                               )
 
     recent_days.pack()
@@ -348,7 +369,7 @@ def tkinter_create_window():
 
     window.resizable(False, False)
     window.attributes("-topmost", True)
-    r.set(1)
+    method_radio_button.set(1)
     window.mainloop()
 
 
