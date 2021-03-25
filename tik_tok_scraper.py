@@ -29,7 +29,7 @@ API_VERSION = 'v3'
 SCOPES = ['https://www.googleapis.com/auth/drive']
 maximum_videos_to_extract = 100000
 step_increment = 2000
-max_retries = 1
+max_retries = 2
 
 
 def upload_video_to_drive(file):
@@ -193,7 +193,7 @@ def extract_videos():
         hashtags_list = ['forYou']
     # Hashtag_search
     for _, hashtag in enumerate(hashtags_list):
-        hashtag = hashtag.split()
+        hashtag = hashtag.strip()
         one_hashtag_videos = []
         time.sleep(3)
         if not for_you:
@@ -208,14 +208,16 @@ def extract_videos():
         if method_radio_button.get() == 1:
 
             for _ in range(int(maximum_videos_to_extract / step_increment) + 1):
-
+                hashtag_ended = False
                 # loading Step increment value failed section
                 if tiktok_hang:
+
                     print(
-                        f'Can\'t extract {step_increment} videos attempting to load less ')
+                        f'Can\'t extract {step_increment} videos attempting to load less')
 
                     while True:
                         try:
+
                             api = TikTokApi.get_instance(use_test_endpoints=True,
                                                          proxy=proxies[proxy_index])
                             previous_videos_length = len(one_hashtag_videos)
@@ -227,12 +229,16 @@ def extract_videos():
                             print(
                                 f'Loaded  {str(len(one_hashtag_videos) - previous_videos_length)} videos, proceeding')
                         except:
+
                             if _ == len(hashtags_list) - 1:
                                 print('Last try failed, finished extracting videos')
                             else:
                                 print('Last try failed, proceeding to next hashtag')
+                            hashtag_ended = True
                             break
 
+                if hashtag_ended:
+                    break
                 # Loading with step_increment value
                 while True:
 
@@ -247,6 +253,7 @@ def extract_videos():
                         proxy_index += 1
                         if proxy_index == len(proxies):
                             proxy_index = 0
+                        print(f'Extracted {str(len(one_hashtag_videos))} videos for hashtag {hashtag}')
                         break
                     except Exception as e:
 
@@ -263,8 +270,8 @@ def extract_videos():
                         retries += 1
 
                         time.sleep(5)
-                all_extracted_videos.extend(one_hashtag_videos)
-                print(f'{len(all_extracted_videos)} videos extracted from {maximum_videos_to_extract}')
+            all_extracted_videos.extend(one_hashtag_videos)
+            print(f'{len(all_extracted_videos)} videos extracted having hashtag {hashtag} ')
         # For you section
         else:
 
