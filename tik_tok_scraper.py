@@ -27,8 +27,9 @@ Client_SECRET_FILE = 'client_secrets.json'
 API_NAME = 'drive'
 API_VERSION = 'v3'
 SCOPES = ['https://www.googleapis.com/auth/drive']
-maximum_videos_to_extract = 10000
-step_increment = 500
+maximum_videos_to_extract = 100000
+step_increment = 2000
+max_retries = 1
 
 
 def upload_video_to_drive(file):
@@ -187,6 +188,7 @@ def extract_videos():
         hashtags_list = ['forYou']
     # Hashtag_search
     for hashtag in hashtags_list:
+        hashtag_videos = []
         time.sleep(3)
         if r.get() == 1:
             print(
@@ -195,32 +197,74 @@ def extract_videos():
             print(f'Extracting videos for you please wait ')
         retries = 1
         tiktok_hang = False
+        proxy_index = 0
         if r.get() == 1:
+
             for _ in range(int(maximum_videos_to_extract / step_increment) + 1):
+
                 if tiktok_hang:
+                    print('Trying one last time without count')
+                    try:
+                        api = TikTokApi.get_instance(use_test_endpoints=True,
+                                                     proxy=proxies[proxy_index])
+                        previous_videos_length = len(hashtag_videos)
+                        hashtag_videos.extend(api.byHashtag(hashtag=hashtag, offset=len(hashtag_videos)))
+                        videos.extend(hashtag_videos)
+                        print(
+                            f'Last try Succeeded,  extracted last {str(len(hashtag_videos) - previous_videos_length)} videos, proceeding')
+                    except:
+                        print('Last try failed, proceeding')
                     break
                 while True:
+
                     try:
-                        videos.extend(api.byHashtag(hashtag=hashtag, offset=step_increment * _, count=step_increment))
+                        print(f'Launching new session with proxy {proxies[proxy_index]} ')
+                        api = TikTokApi.get_instance(use_test_endpoints=True,
+                                                     proxy=proxies[proxy_index])
+                        hashtag_videos = api.byHashtag(hashtag=hashtag, offset=step_increment * _, count=step_increment)
+                        videos.extend(hashtag_videos)
+                        proxy_index += 1
+                        if proxy_index == len(proxies):
+                            proxy_index = 0
                         break
                     except Exception as e:
-                        print(e)
+                        proxy_index += 1
+                        if proxy_index == len(proxies):
+                            proxy_index = 0
 
                         print(f'Error retrying {retries}')
-                        retries += 1
-                        if (retries == 5):
+
+                        if retries == max_retries:
                             print(f'Tried {retries} times, exiting now')
                             tiktok_hang = True
                             break
-
+                        retries += 1
                         time.sleep(5)
                 print(f'{len(videos)} videos extracted from {maximum_videos_to_extract}')
         else:
-            videos = api.trending()
+
+            while True:
+                try:
+                    print(f'Trying with proxy {proxies[proxy_index]}')
+                    api = TikTokApi.get_instance(use_test_endpoints=True,
+                                                 proxy=proxies[proxy_index])
+                    videos = api.trending()
+                    break
+                except:
+
+                    proxy_index += 1
+                    if proxy_index == len(proxies):
+                        proxy_index = 0
+                    print(f'Failed ,Trying a session with proxy {proxies[proxy_index]}')
+        # Extraction done, printing results
+        print(f'_____Extracted {len(videos)} so far')
+        time.sleep(5)
 
         if len(videos) == 0:
+            print(f'No videos extracted from hashtags {hashtag}')
             return
-            # loop through the videos
+        # Writing to file
+        print(f'Write video info of hashtag {hashtag} to file')
         with open('ticktock.txt', 'w', encoding="utf-8") as opened_file:
             for video in videos:
                 days_since_creation = (datetime.now() - datetime.fromtimestamp(video['createTime'])).days
@@ -231,8 +275,6 @@ def extract_videos():
                     videos_list.append(
                         f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
 
-    print(
-        f'{len(videos_list)} videos found uploaded in the recent {str(days_allowed)} day(s) with minimum likes {like_input.get()}')
     if r.get() == 1:
         for_you = False
     else:
@@ -243,6 +285,9 @@ def extract_videos():
         download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
                        name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}',
                        for_you=for_you)
+    print(
+        f'{len(videos_list)} videos found uploaded in the recent {str(days_allowed)} day(s) with minimum likes {like_input.get()}')
+
     if len(videos_list) > 0:
         info.config(text=f"Downloading Finished,Downloaded {len(videos_list)}")
         print(f"Downloading Finished,Downloaded {len(videos_list)}")
@@ -325,6 +370,13 @@ def initialize_selinuim():
 
 
 if __name__ == '__main__':
+    proxies = ['http://ghulrcuk:bad3428050@104.140.83.219:36505', 'http://ghulrcuk:bad3428050@154.16.61.23:36505',
+               'http://ghulrcuk:bad3428050@23.108.47.207', 'http://ghulrcuk:bad3428050@198.46.174.117:36505',
+               'http://ghulrcuk:bad3428050@107.172.246.184', 'http://ghulrcuk:bad3428050@198.46.176.105',
+               'http://ghulrcuk:bad3428050@154.16.61.56:36505', 'http://ghulrcuk:bad3428050@107.172.225.52',
+               'http://ghulrcuk:bad3428050@192.210.194.137:36505', 'http://ghulrcuk:bad3428050@154.16.61.79',
+
+               ]
     url = 'https://v39-eu.tiktokcdn.com/473bab26c5c16127ef5e40153ba913c2/60593ca8/video/tos/useast2a/tos-useast2a-pve-0068/1a26ba14ce9d4dcba7ac8c67d0e7f578/?a=1233&br=722&bt=361&cd=0%7C0%7C0&ch=0&cr=0&cs=0&cv=1&dr=0&ds=6&er=&l=2021032218552301011515311212289D59&lr=all&mime_type=video_mp4&net=0&pl=0&qs=0&rc=amt4Zjw4aGh2NDMzOTczM0ApODs4Ojo5ZTw2NzU1NTU0PGdlLS1gcTZwazVgLS1iMTZzczVfLzQ2YDZhM2MyLjRfMF46Yw%3D%3D&vl=&vr='
 
     d = dropbox.Dropbox(
@@ -361,8 +413,6 @@ if __name__ == '__main__':
 
     # initialize tiktok api
 
-    api = TikTokApi.get_instance(use_test_endpoints=True,
-                       )
     # api.get_Video_By_DownloadURL("https://www.tiktok.com/@bouhmid576/video/6940552531063950598")
 
     # Create Ui
