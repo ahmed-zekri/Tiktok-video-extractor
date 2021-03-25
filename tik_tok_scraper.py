@@ -227,7 +227,7 @@ def extract_videos():
                             if proxy_index == len(proxies):
                                 proxy_index = 0
                             print(
-                                f'Loaded  {str(len(one_hashtag_videos) - previous_videos_length)} videos, proceeding')
+                                f'Loaded  {str(len(one_hashtag_videos) - previous_videos_length)} videos using proxy {proxies[proxy_index]}, proceeding')
                         except:
 
                             if _ == len(hashtags_list) - 1:
@@ -270,8 +270,8 @@ def extract_videos():
                         retries += 1
 
                         time.sleep(5)
-            all_extracted_videos.extend(one_hashtag_videos)
-            print(f'{len(all_extracted_videos)} videos extracted having hashtag {hashtag} ')
+
+
         # For you section
         else:
 
@@ -280,7 +280,7 @@ def extract_videos():
                     print(f'Trying with proxy {proxies[proxy_index]}')
                     api = TikTokApi.get_instance(use_test_endpoints=True,
                                                  proxy=proxies[proxy_index])
-                    all_extracted_videos = api.trending()
+                    one_hashtag_videos = api.trending()
                     break
                 except:
 
@@ -288,26 +288,33 @@ def extract_videos():
                     if proxy_index == len(proxies):
                         proxy_index = 0
                     print(f'Failed ,Trying a session with proxy {proxies[proxy_index]}')
-        # Extraction done, printing results
-        print(f'_____Extracted {len(all_extracted_videos)} so far')
-        time.sleep(5)
 
-        if len(all_extracted_videos) == 0:
+        print(f'_____Extracted a total of {len(one_hashtag_videos)} for hashtag {hashtag} applying your filters now')
+        time.sleep(2)
+
+        # Continue if no video matching the hashtag was found
+        if len(one_hashtag_videos) == 0:
             print(f'No videos extracted from hashtags {hashtag}')
-            return
-        # Writing to file
-        print(f'Write video info of hashtag {hashtag} to file')
+            continue
+
+        # Applying filters to extracted hashtag videos
         with open('ticktock.txt', 'w', encoding="utf-8") as opened_file:
-            for video in all_extracted_videos:
+            counter = 0
+            for video in one_hashtag_videos:
                 days_since_creation = (datetime.now() - datetime.fromtimestamp(video['createTime'])).days
                 if int(days_since_creation <= days_allowed):
                     if float(video['stats']['diggCount']) > float(like_input.get()):
+                        counter += 1
                         opened_file.write(
                             f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}  ; Author: {video["author"]["uniqueId"]} \n')
-                    videos_list.append(
-                        f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
+                        videos_list.append(
+                            f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
+            print(
+                f'Filter applied found {counter} videos in hashtag {hashtag} in the recent {days_allowed} with a minmum like of {like_input.get()}')
 
-    info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
+    # info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
+    print(
+        f'A total of {len(videos_list)} videos extracted in the recent {days_allowed} days with minimum likes of {like_input.get()}  downloading them now')
     videos_list.sort(key=lambda x: int(x.split('&&')[4]), reverse=True)
     for count, video_item in enumerate(videos_list):
         download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
@@ -405,7 +412,11 @@ if __name__ == '__main__':
                'http://ghulrcuk:bad3428050@192.210.194.137:36505', 'http://ghulrcuk:bad3428050@154.16.61.79',
 
                ]
-    url = 'https://v39-eu.tiktokcdn.com/473bab26c5c16127ef5e40153ba913c2/60593ca8/video/tos/useast2a/tos-useast2a-pve-0068/1a26ba14ce9d4dcba7ac8c67d0e7f578/?a=1233&br=722&bt=361&cd=0%7C0%7C0&ch=0&cr=0&cs=0&cv=1&dr=0&ds=6&er=&l=2021032218552301011515311212289D59&lr=all&mime_type=video_mp4&net=0&pl=0&qs=0&rc=amt4Zjw4aGh2NDMzOTczM0ApODs4Ojo5ZTw2NzU1NTU0PGdlLS1gcTZwazVgLS1iMTZzczVfLzQ2YDZhM2MyLjRfMF46Yw%3D%3D&vl=&vr='
+    url = 'https://v39-eu.tiktokcdn.com/473bab26c5c16127ef5e40153ba913c2/60593ca8/video/tos/useast2a/tos-useast2a-pve' \
+          '-0068/1a26ba14ce9d4dcba7ac8c67d0e7f578/?a=1233&br=722&bt=361&cd=0%7C0%7C0&ch=0&cr=0&cs=0&cv=1&dr=0&ds=6&er' \
+          '=&l=2021032218552301011515311212289D59&lr=all&mime_type=video_mp4&net=0&pl=0&qs=0&rc' \
+          '=amt4Zjw4aGh2NDMzOTczM0ApODs4Ojo5ZTw2NzU1NTU0PGdlLS1gcTZwazVgLS1iMTZzczVfLzQ2YDZhM2MyLjRfMF46Yw%3D%3D&vl' \
+          '=&vr= '
 
     d = dropbox.Dropbox(
         'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct')
