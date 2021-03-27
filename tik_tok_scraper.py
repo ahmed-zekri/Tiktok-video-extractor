@@ -25,10 +25,9 @@ proxy_index = 0
 
 
 def upload_video(file):
-    # try:
     d = dropbox.Dropbox(
         'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct')
-    # id_folder = None
+
     print(f'[Upload] Uploading {file.split("/")[1]} to dropbox please wait')
 
     try:
