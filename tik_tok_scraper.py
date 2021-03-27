@@ -4,6 +4,7 @@ import subprocess
 import time
 import tkinter as tk
 import concurrent.futures
+from random import randint
 from tkinter.ttk import Checkbutton, Radiobutton
 
 import dropbox as dropbox
@@ -22,14 +23,16 @@ browser = None
 days_input = None
 service = None
 info = None
+videos_downloaded = 0
 method_radio_button = None
 Client_SECRET_FILE = 'client_secrets.json'
 API_NAME = 'drive'
 API_VERSION = 'v3'
 SCOPES = ['https://www.googleapis.com/auth/drive']
-maximum_videos_to_extract = 100000
+maximum_videos_to_extract = 8000
 step_increment = 2000
 max_retries = 2
+proxy_index = 0
 
 
 def upload_video_to_drive(file):
@@ -66,7 +69,11 @@ def upload_video_to_drive(file):
     with open(file, "rb") as f:
         # upload gives you metadata about the file
         # we want to overwite any previous version of the file
-        d.files_upload(f.read(), f'/{file}', mute=True)
+        try:
+            d.files_upload(f.read(), f'/{file}', mute=True)
+        except:
+            print('Failed uploading to dropbox moving to next video')
+            return
     print(f'File {file.split("/")[1]} uploaded successfully')
 
     # create a shared link
@@ -92,8 +99,8 @@ def timer(time_count, current_time):
 
 
 def download_video(url, count, last_index=False, from_sample=False, name=None, for_you=False):
-    if name is not None:
-        print(f'Attempting to download {name}, {count} videos downloaded so far')
+    # if name is not None:
+    #     print(f'Attempting to download {name}, {count} videos downloaded so far')
     # browser.get('https://ssstik.io/')
     # print('Waiting for 8 seconds this is necessary to avoid server ban ')
     # current_time = time.perf_counter()
@@ -157,9 +164,28 @@ def download_video(url, count, last_index=False, from_sample=False, name=None, f
     else:
         file_name = f'{name.split("_")[0]}/{name}.mp4'
     info.config(text=f"Downloading File {str(count + 1)}")
-    subprocess.run([
-        'youtube-dl.exe', url, '--output', file_name],
-        check=True, )
+    global proxy_index
+    try:
+        proxy_index += 1
+        if proxy_index == len(proxies):
+            proxy_index = 0
+        api = TikTokApi.get_instance(use_test_endpoints=True,
+                                     proxy=proxies[proxy_index])
+        print(f'Attempting to download file using proxy {proxies[proxy_index]} ')
+        if not os.path.exists(f'{name.split("_")[0]}'):
+            os.makedirs(f'{name.split("_")[0]}')
+        with open(f'{file_name}', "wb") as f:
+
+            f.write(api.get_video_by_url(url, return_bytes=1))
+        # subprocess.run([
+        #     'youtube-dl.exe', url, '--output', file_name],
+        #     check=True, )
+        global videos_downloaded
+        videos_downloaded += 1
+        print(f'{videos_downloaded} videos downloaded successfully')
+    except:
+        print('Failed downloading one video moving to next one')
+        return
     upload_video_to_drive(file_name)
 
     if last_index:
@@ -186,13 +212,14 @@ def extract_videos():
     except:
         pass
     info.config(text=f"Exporting videos info to a txt file, this will take a moment")
-    videos_list = []
+
     if method_radio_button.get() == 1:
         hashtags_list = hashtag_input.get().split(',')
     else:
         hashtags_list = ['forYou']
     # Hashtag_search
     for _, hashtag in enumerate(hashtags_list):
+        videos_list = []
         hashtag = hashtag.strip()
         one_hashtag_videos = []
         time.sleep(3)
@@ -203,7 +230,8 @@ def extract_videos():
             print(f'Extracting videos for you please wait ')
 
         tiktok_hang = False
-        proxy_index = 0
+        global proxy_index
+
         # Hashtag section
         if method_radio_button.get() == 1:
 
@@ -289,7 +317,7 @@ def extract_videos():
                         proxy_index = 0
                     print(f'Failed ,Trying a session with proxy {proxies[proxy_index]}')
 
-        print(f'_____Extracted a total of {len(one_hashtag_videos)} for hashtag {hashtag} applying your filters now')
+        # print(f'_____Extracted a total of {len(one_hashtag_videos)} for hashtag {hashtag} applying your filters now')
         time.sleep(2)
 
         # Continue if no video matching the hashtag was found
@@ -309,23 +337,26 @@ def extract_videos():
                             f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}  ; Author: {video["author"]["uniqueId"]} \n')
                         videos_list.append(
                             f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}&&{hashtag}&&{video["author"]["uniqueId"]}&&{video["video"]["id"]}&&{video["createTime"]}')
-            print(
-                f'Filter applied found {counter} videos in hashtag {hashtag} in the recent {days_allowed} with a minmum like of {like_input.get()}')
+        videos_list.sort(key=lambda x: int(x.split('&&')[4]), reverse=True)
+        print(
+            f'Filter applied found {counter} videos in hashtag {hashtag} in the recent {days_allowed} with a minmum like of {like_input.get()}')
+        # print(
+        #     f'Attempting to download {len(videos_list)} videos for hashtag {hashtag} with a minimum like of {like_input.get()} with recent days {days_allowed}')
+        for count, video_item in enumerate(videos_list):
+            download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
+                           name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}',
+                           for_you=for_you)
 
     # info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
-    print(
-        f'A total of {len(videos_list)} videos extracted in the recent {days_allowed} days with minimum likes of {like_input.get()}  downloading them now')
-    videos_list.sort(key=lambda x: int(x.split('&&')[4]), reverse=True)
-    for count, video_item in enumerate(videos_list):
-        download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
-                       name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}',
-                       for_you=for_you)
-    print(
-        f'{len(videos_list)} videos found uploaded in the recent {str(days_allowed)} day(s) with minimum likes {like_input.get()}')
+    # print(
+    #     f'A total of {len(videos_list)} videos extracted in the recent {days_allowed} days with minimum likes of {like_input.get()}  downloading them now')
+
+    # print(
+    #     f'{len(videos_list)} videos found uploaded in the recent {str(days_allowed)} day(s) with minimum likes {like_input.get()}')
 
     if len(videos_list) > 0:
         info.config(text=f"Downloading Finished,Downloaded {len(videos_list)}")
-        print(f"Downloading Finished,Downloaded {len(videos_list)}")
+        print(f"Downloading Finished,Downloaded {videos_downloaded}")
     else:
         print(f"No video found matching your criteria")
         info.config(text=f"No video found matching your criteria")
@@ -412,6 +443,7 @@ if __name__ == '__main__':
                'http://ghulrcuk:bad3428050@192.210.194.137:36505', 'http://ghulrcuk:bad3428050@154.16.61.79',
 
                ]
+    proxy_index = randint(0, len(proxies) - 1)
     url = 'https://v39-eu.tiktokcdn.com/473bab26c5c16127ef5e40153ba913c2/60593ca8/video/tos/useast2a/tos-useast2a-pve' \
           '-0068/1a26ba14ce9d4dcba7ac8c67d0e7f578/?a=1233&br=722&bt=361&cd=0%7C0%7C0&ch=0&cr=0&cs=0&cv=1&dr=0&ds=6&er' \
           '=&l=2021032218552301011515311212289D59&lr=all&mime_type=video_mp4&net=0&pl=0&qs=0&rc' \
