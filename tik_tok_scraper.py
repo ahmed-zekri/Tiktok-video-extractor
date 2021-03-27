@@ -4,6 +4,7 @@ import subprocess
 import time
 import tkinter as tk
 import concurrent.futures
+from multiprocessing import Value
 from random import randint
 from tkinter.ttk import Checkbutton, Radiobutton
 
@@ -29,16 +30,30 @@ Client_SECRET_FILE = 'client_secrets.json'
 API_NAME = 'drive'
 API_VERSION = 'v3'
 SCOPES = ['https://www.googleapis.com/auth/drive']
-maximum_videos_to_extract = 8000
+maximum_videos_to_extract = 10000
 step_increment = 2000
 max_retries = 2
 proxy_index = 0
 
 
 def upload_video_to_drive(file):
+    # try:
+    d = dropbox.Dropbox(
+        'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct')
     # id_folder = None
     print(f'[Upload] Uploading {file.split("/")[1]} to dropbox please wait')
-    # # To create a new folder
+    # while True:
+    try:
+        with open(file, "rb") as f:
+            # upload gives you metadata about the file
+            # we want to overwite any previous version of the file
+            print(f'Attempting to upload file {file}')
+            d.files_upload(f.read(), f'/{file}', mute=True)
+            print(f'File {file.split("/")[1]} uploaded successfully')
+            # break
+    except Exception as e:
+        print(f'Upload failed trying again reason {e}')
+    # To create a new folder
     # folders = drive.ListFile({"q": "mimeType='application/vnd.google-apps.folder' and trashed=false"}).GetList()
     # for folder in folders:
     #     if folder['title'] == file.split('/')[0]:
@@ -60,21 +75,12 @@ def upload_video_to_drive(file):
     # path object, defining the file
 
     # target location in Dropbox
-    target = "/"  # the target folder
+    # target = "/"  # the target folder
     # the target path and file name
 
     # Create a dropbox object using an API v2 key
 
     # open the file and upload it
-    with open(file, "rb") as f:
-        # upload gives you metadata about the file
-        # we want to overwite any previous version of the file
-        try:
-            d.files_upload(f.read(), f'/{file}', mute=True)
-        except:
-            print('Failed uploading to dropbox moving to next video')
-            return
-    print(f'File {file.split("/")[1]} uploaded successfully')
 
     # create a shared link
     # link = d.sharing_create_shared_link(targetfile)
@@ -98,7 +104,8 @@ def timer(time_count, current_time):
             break
 
 
-def download_video(url, count, last_index=False, from_sample=False, name=None, for_you=False):
+def download_video(proxies, proxy_index, url, count, last_index=False, from_sample=False,
+                   name=None, for_you=False):
     # if name is not None:
     #     print(f'Attempting to download {name}, {count} videos downloaded so far')
     # browser.get('https://ssstik.io/')
@@ -163,30 +170,41 @@ def download_video(url, count, last_index=False, from_sample=False, name=None, f
         file_name = f'For_you/{name}.mp4'
     else:
         file_name = f'{name.split("_")[0]}/{name}.mp4'
-    info.config(text=f"Downloading File {str(count + 1)}")
-    global proxy_index
-    try:
-        proxy_index += 1
-        if proxy_index == len(proxies):
-            proxy_index = 0
-        api = TikTokApi.get_instance(use_test_endpoints=True,
-                                     proxy=proxies[proxy_index])
-        print(f'Attempting to download file using proxy {proxies[proxy_index]} ')
-        if not os.path.exists(f'{name.split("_")[0]}'):
-            os.makedirs(f'{name.split("_")[0]}')
-        with open(f'{file_name}', "wb") as f:
+    # info.config(text=f"Downloading File {str(count + 1)}")
+    # global proxy_index
 
-            f.write(api.get_video_by_url(url, return_bytes=1))
-        # subprocess.run([
-        #     'youtube-dl.exe', url, '--output', file_name],
-        #     check=True, )
-        global videos_downloaded
-        videos_downloaded += 1
-        print(f'{videos_downloaded} videos downloaded successfully')
-    except:
-        print('Failed downloading one video moving to next one')
-        return
-    upload_video_to_drive(file_name)
+    # proxy_index += 1
+    # if proxy_index == len(proxies):
+    #     proxy_index = 0
+
+    print(f'Attempting to download file using proxy {proxies[proxy_index]} ')
+    if not os.path.exists(f'{name.split("_")[0]}'):
+        os.makedirs(f'{name.split("_")[0]}')
+    with open(f'{file_name}', "wb") as f:
+
+        while True:
+            try:
+                api = TikTokApi.get_instance(use_test_endpoints=True,
+                                             proxy=proxies[proxy_index])
+                print(f'Attempting to download file {file_name} using proxy {proxies[proxy_index]} ')
+                f.write(api.get_video_by_url(url, return_bytes=1))
+                print(f'File {file_name} downloaded successfully')
+                break
+            except Exception as e:
+                print(f'Download failed trying again reason:{str(e)}')
+                proxy_index += 1
+                if proxy_index == len(proxies):
+                    proxy_index = 0
+
+    # subprocess.run([
+    #     'youtube-dl.exe', url, '--output', file_name],
+    #     check=True, )
+    # global videos_downloaded
+    # videos_downloaded += 1
+    # total_downloaded_videos.value += 1
+    # print(f'{total_downloaded_videos.value} videos downloaded successfully')
+
+    # upload_video_to_drive(file_name)
 
     if last_index:
         info.config(text=f"All downloads completed successfully")
@@ -342,12 +360,26 @@ def extract_videos():
             f'Filter applied found {counter} videos in hashtag {hashtag} in the recent {days_allowed} with a minmum like of {like_input.get()}')
         # print(
         #     f'Attempting to download {len(videos_list)} videos for hashtag {hashtag} with a minimum like of {like_input.get()} with recent days {days_allowed}')
-        for count, video_item in enumerate(videos_list):
-            download_video(video_item.split('&&')[0], count, last_index=(count == len(videos_list) - 1),
-                           name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}',
-                           for_you=for_you)
+        with concurrent.futures.ProcessPoolExecutor() as executor:
 
-    # info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
+            for count, video_item in enumerate(videos_list):
+                proxy_index += 1
+                if proxy_index == len(proxies):
+                    proxy_index = 0
+                time.sleep(2)
+                executor.submit(download_video, proxies, proxy_index,
+                                video_item.split('&&')[0], count,
+                                last_index=(count == len(videos_list) - 1),
+                                name=f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}',
+                                for_you=for_you)
+        for count, video_item in enumerate(videos_list):
+            name = f'{video_item.split("&&")[1]}_{video_item.split("&&")[2]}_{video_item.split("&&")[3]}'
+            if for_you:
+                file_name = f'For_you/{name}.mp4'
+            else:
+                file_name = f'{name.split("_")[0]}/{name}.mp4'
+            upload_video_to_drive(file_name)
+                # info.config(text=f"Videos infos exported to ticktock.txt downloading videos now ")
     # print(
     #     f'A total of {len(videos_list)} videos extracted in the recent {days_allowed} days with minimum likes of {like_input.get()}  downloading them now')
 
@@ -436,6 +468,7 @@ def initialize_selinuim():
 
 
 if __name__ == '__main__':
+    total_downloaded_videos = Value('d', 0.0)
     proxies = ['http://ghulrcuk:bad3428050@104.140.83.219:36505', 'http://ghulrcuk:bad3428050@154.16.61.23:36505',
                'http://ghulrcuk:bad3428050@23.108.47.207', 'http://ghulrcuk:bad3428050@198.46.174.117:36505',
                'http://ghulrcuk:bad3428050@107.172.246.184', 'http://ghulrcuk:bad3428050@198.46.176.105',
