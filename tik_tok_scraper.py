@@ -7,6 +7,7 @@ from random import randint
 from tkinter.ttk import Radiobutton
 
 import dropbox as dropbox
+from dropbox.files import WriteMode
 from TikTokApi import TikTokApi
 
 hashtag_input = None
@@ -25,9 +26,6 @@ proxy_index = 0
 
 
 def upload_video(file):
-    d = dropbox.Dropbox(
-        'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct')
-
     print(f'[Upload] Uploading {file.split("/")[1]} to dropbox please wait')
 
     try:
@@ -35,11 +33,11 @@ def upload_video(file):
             # upload gives you metadata about the file
             # we want to overwite any previous version of the file
             print(f'Attempting to upload file {file}')
-            d.files_upload(f.read(), f'/{file}', mute=True)
+            d.files_upload(f.read(), f'/{file}', mode=dropbox.files.WriteMode.overwrite)
             print(f'File {file.split("/")[1]} uploaded successfully')
             # break
     except Exception as e:
-        print(f'Upload failed trying again reason {e}')
+        print(f'Upload failed reason {e}')
 
 
 def timer(time_count, current_time):
@@ -60,7 +58,6 @@ def download_video(download_proxies, download_proxy_index, url, count,
     else:
         file_name = f'{name.split("_")[0]}/{name}.mp4'
 
-    print(f'Attempting to download file using proxy {download_proxies[download_proxy_index]} ')
     if not os.path.exists(f'{name.split("_")[0]}'):
         os.makedirs(f'{name.split("_")[0]}')
     with open(f'{file_name}', "wb") as f:
@@ -172,7 +169,7 @@ def extract_videos():
                     except Exception as e:
 
                         # Load failed trying for max reties time then forward to tiktok hang section
-                        print(f'Error retrying {str(retries)} of {str(max_retries)}')
+                        print(f'Error retrying {str(retries)} of {str(max_retries)} reason {str(e)}')
                         proxy_index += 1
                         if proxy_index == len(proxies):
                             proxy_index = 0
@@ -196,12 +193,11 @@ def extract_videos():
                                                  proxy=proxies[proxy_index])
                     one_hashtag_videos = api.trending()
                     break
-                except:
-
+                except Exception as e:
+                    print(f'Failed reason {e} retrying...')
                     proxy_index += 1
                     if proxy_index == len(proxies):
                         proxy_index = 0
-                    print(f'Failed ,Trying a session with proxy {proxies[proxy_index]}')
 
         # print(f'_____Extracted a total of {len(one_hashtag_videos)} for hashtag {hashtag} applying your filters now')
         time.sleep(2)
@@ -297,6 +293,8 @@ if __name__ == '__main__':
                'http://ghulrcuk:bad3428050@192.210.194.137:36505', 'http://ghulrcuk:bad3428050@154.16.61.79',
 
                ]
+    d = dropbox.Dropbox(
+        'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct')
     proxy_index = randint(0, len(proxies) - 1)
 
     tkinter_create_window()

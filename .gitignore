@@ -9,6 +9,7 @@ Include/
 *.rar
 Scripts/
 pyvenv.cfg
+*.txt
 # C extensions
 *.so
 .idea/
