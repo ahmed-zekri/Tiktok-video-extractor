@@ -62,19 +62,19 @@ def download_video(download_proxies, download_proxy_index, url, count,
         os.makedirs(f'{name.split("_")[0]}')
     with open(f'{file_name}', "wb") as f:
 
-        while True:
-            try:
-                api = TikTokApi.get_instance(use_test_endpoints=True,
-                                             proxy=download_proxies[download_proxy_index])
-                print(f'Attempting to download file {file_name} using proxy {download_proxies[download_proxy_index]} ')
-                f.write(api.get_video_by_url(url, return_bytes=1))
-                print(f'File {file_name} downloaded successfully')
-                break
-            except Exception as e:
-                print(f'Download failed trying again reason:{str(e)}')
-                download_proxy_index += 1
-                if download_proxy_index == len(download_proxies):
-                    download_proxy_index = 0
+        # while True:
+        try:
+            api = TikTokApi.get_instance(use_test_endpoints=True,
+                                         proxy=download_proxies[download_proxy_index])
+            print(f'Attempting to download file {file_name} using proxy {download_proxies[download_proxy_index]} ')
+            f.write(api.get_video_by_url(url, return_bytes=1))
+            print(f'File {file_name} downloaded successfully')
+            # break
+        except Exception as e:
+            print(f'Download failed trying again reason:{str(e)}')
+            # download_proxy_index += 1
+            # if download_proxy_index == len(download_proxies):
+            #     download_proxy_index = 0
 
 
 def extract_videos():
@@ -218,6 +218,10 @@ def extract_videos():
                         counter += 1
                         name = f'{hashtag}_{video["author"]["uniqueId"]}_{video["video"]["id"]}'
                         url = f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}'
+                        time.sleep(1)
+                        proxy_index += 1
+                        if proxy_index == len(proxies):
+                            proxy_index = 0
                         executor.submit(download_video, proxies, proxy_index,
                                         url, counter,
                                         name=name,
