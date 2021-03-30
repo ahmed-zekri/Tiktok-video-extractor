@@ -60,6 +60,7 @@ def download_video(download_proxies, download_proxy_index, url, count,
 
     if not os.path.exists(f'{name.split("_")[0]}'):
         os.makedirs(f'{name.split("_")[0]}')
+    error = False
     with open(f'{file_name}', "wb") as f:
 
         # while True:
@@ -69,12 +70,32 @@ def download_video(download_proxies, download_proxy_index, url, count,
             print(f'Attempting to download file {file_name} using proxy {download_proxies[download_proxy_index]} ')
             f.write(api.get_video_by_url(url, return_bytes=1))
             print(f'File {file_name} downloaded successfully')
+            api.clean_up()
             # break
         except Exception as e:
-            print(f'Download failed trying again reason:{str(e)}')
-            # download_proxy_index += 1
-            # if download_proxy_index == len(download_proxies):
-            #     download_proxy_index = 0
+            error = True
+            print(f'Download failed reason:{str(e)}')
+
+    if error:
+        try:
+            os.remove(file_name)
+            print('Failed file removed')
+        except Exception as e:
+            print(f'Unable to delete file {str(e)}')
+    else:
+
+        try:
+            file_size = float(os.path.getsize(file_name))
+
+            if float(file_size) <= 1000:
+                os.remove(file_name)
+                print('Corrupted file removed')
+        except Exception as e:
+            print(f'Failed removing corrupted file {str(e)}')
+
+    # download_proxy_index += 1
+    # if download_proxy_index == len(download_proxies):
+    #     download_proxy_index = 0
 
 
 def extract_videos():
@@ -211,13 +232,18 @@ def extract_videos():
         with concurrent.futures.ProcessPoolExecutor() as executor:
 
             counter = 0
+            urls = []
             for video in one_hashtag_videos:
                 days_since_creation = (datetime.now() - datetime.fromtimestamp(video['createTime'])).days
                 if int(days_since_creation <= days_allowed):
                     if float(video['stats']['diggCount']) > float(like_input.get()):
                         counter += 1
                         name = f'{hashtag}_{video["author"]["uniqueId"]}_{video["video"]["id"]}'
+
                         url = f'https://www.tiktok.com/@{video["author"]["uniqueId"]}/video/{video["video"]["id"]}'
+                        if urls.__contains__(url):
+                            continue
+                        urls.append(url)
                         time.sleep(1)
                         proxy_index += 1
                         if proxy_index == len(proxies):
@@ -295,6 +321,15 @@ if __name__ == '__main__':
                'http://ghulrcuk:bad3428050@107.172.246.184', 'http://ghulrcuk:bad3428050@198.46.176.105',
                'http://ghulrcuk:bad3428050@154.16.61.56:36505', 'http://ghulrcuk:bad3428050@107.172.225.52',
                'http://ghulrcuk:bad3428050@192.210.194.137:36505', 'http://ghulrcuk:bad3428050@154.16.61.79',
+
+               'http://rcrvtkug:21d0ec259e@192.3.240.187:36505', 'http://rcrvtkug:21d0ec259e@107.174.231.174:36505',
+               'http://rcrvtkug:21d0ec259e@107.174.249.78:36505', 'http://rcrvtkug:21d0ec259e@107.174.151.237:36505',
+               'http://rcrvtkug:21d0ec259e@107.174.5.101:36505',
+               'http://rcrvtkug:21d0ec259e@107.175.90.3:36505',
+               'http://rcrvtkug:21d0ec259e@107.174.151.232:36505',
+               'http://rcrvtkug:21d0ec259e@107.175.129.23:36505',
+               'http://rcrvtkug:21d0ec259e@107.174.5.114:36505',
+               'http://rcrvtkug:21d0ec259e@107.175.90.101:36505',
 
                ]
     d = dropbox.Dropbox(
