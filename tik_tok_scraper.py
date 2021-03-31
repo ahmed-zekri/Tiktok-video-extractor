@@ -19,16 +19,35 @@ info = None
 videos_downloaded = 0
 method_radio_button = None
 
-maximum_videos_to_extract = 10000
-step_increment = 2000
+maximum_videos_to_extract = 5000
+step_increment = 1800
 max_retries = 2
 proxy_index = 0
 
 
-def upload_video(file):
-    print(f'[Upload] Uploading {file.split("/")[1]} to dropbox please wait')
+def get_my_proxy(proxy_arg):
+    """ Static method to get proxy
+    """
+
+    http_proxy = proxy_arg
+    https_proxy = proxy_arg
+
+    proxyDict = {
+        "http": http_proxy,
+        "https": https_proxy
+
+    }
+    return proxyDict
+
+
+def upload_video(file, proxy_index):
+    print(f'[Upload] Uploading {file.split("/")[1]} to dropbox using proxy {proxies[proxy_index]} please wait')
 
     try:
+        mysesh = dropbox.create_session(1, get_my_proxy(proxies[proxy_index]))
+
+        d = dropbox.Dropbox(
+            'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct', session=mysesh)
         with open(file, "rb") as f:
             # upload gives you metadata about the file
             # we want to overwite any previous version of the file
@@ -244,7 +263,7 @@ def extract_videos():
                         if urls.__contains__(url):
                             continue
                         urls.append(url)
-                        time.sleep(1)
+                        time.sleep(randint(1, 5))
                         proxy_index += 1
                         if proxy_index == len(proxies):
                             proxy_index = 0
@@ -261,7 +280,11 @@ def extract_videos():
 
         # Uploading downloaded videos
         for video in videos_list:
-            upload_video(video)
+            time.sleep(randint(1, 5))
+            upload_video(video, proxy_index)
+            proxy_index += 1
+            if proxy_index == len(proxies):
+                proxy_index = 0
 
 
 def tkinter_create_window():
@@ -332,8 +355,7 @@ if __name__ == '__main__':
                'http://rcrvtkug:21d0ec259e@107.175.90.101:36505',
 
                ]
-    d = dropbox.Dropbox(
-        'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct')
+
     proxy_index = randint(0, len(proxies) - 1)
 
     tkinter_create_window()
