@@ -5,10 +5,11 @@ import tkinter as tk
 from datetime import datetime
 from random import randint
 from tkinter.ttk import Radiobutton
-
+import sys
 import dropbox as dropbox
 from dropbox.files import WriteMode
 from TikTokApi import TikTokApi
+import subprocess
 
 hashtag_input = None
 like_input = None
@@ -19,8 +20,8 @@ info = None
 videos_downloaded = 0
 method_radio_button = None
 
-maximum_videos_to_extract = 5000
-step_increment = 1800
+maximum_videos_to_extract = 18
+step_increment = 4
 max_retries = 2
 proxy_index = 0
 
@@ -40,7 +41,7 @@ def get_my_proxy(proxy_arg):
     return proxyDict
 
 
-def upload_video(file, proxy_index):
+def upload_video(file, proxy_index, proxies):
     print(f'[Upload] Uploading {file.split("/")[1]} to dropbox using proxy {proxies[proxy_index]} please wait')
 
     try:
@@ -109,54 +110,71 @@ def download_video(download_proxies, download_proxy_index, url, count,
             if float(file_size) <= 1000:
                 os.remove(file_name)
                 print('Corrupted file removed')
+            else:
+                upload_video(file_name, download_proxy_index, download_proxies)
         except Exception as e:
             print(f'Failed removing corrupted file {str(e)}')
 
-    # download_proxy_index += 1
-    # if download_proxy_index == len(download_proxies):
-    #     download_proxy_index = 0
 
-
-def extract_videos():
+def extract_videos(from_shell=False):
     # Number of retries when error encountered
     retries = 1
-    if method_radio_button.get() == 1:
-        print('selected hashtag option')
-        for_you = False
+    if not from_shell:
+        if method_radio_button.get() == 1:
+            print('selected hashtag option')
+            for_you = False
+        else:
+            print('selected for you option')
+            for_you = True
     else:
-        print('selected for you option')
-        for_you = True
+        for_you = False
 
     global info
     global days_input
     days_allowed = 10000
     try:
-        days_allowed = int(days_input.get())
+        if not from_shell:
+            days_allowed = int(days_input.get())
+        else:
+            days_allowed = int(sys.argv[2])
     except:
         pass
-    info.config(text=f"Exporting videos info to a txt file, this will take a moment")
-
-    if method_radio_button.get() == 1:
-        hashtags_list = hashtag_input.get().split(',')
+    # info.config(text=f"Exporting videos info to a txt file, this will take a moment")
+    if not from_shell:
+        if method_radio_button.get() == 1:
+            hashtags_list = hashtag_input.get().split(',')
+            for _, hashtag in enumerate(hashtags_list):
+                if _ > 0:
+                    subprocess.Popen([
+                        'python', 'tik_tok_scraper.py', like_input.get(), str(days_allowed), hashtag],
+                        shell=True)
+        else:
+            hashtags_list = ['forYou']
     else:
-        hashtags_list = ['forYou']
+        hashtags_list = [sys.argv[3]]
+
     # Hashtag_search
     for _, hashtag in enumerate(hashtags_list):
         videos_list = []
         hashtag = hashtag.strip()
         one_hashtag_videos = []
         time.sleep(3)
-        if not for_you:
+        if from_shell:
             print(
                 f'extracting videos with hashtag \"{hashtag}\" this will take a couple of minutes')
         else:
-            print(f'Extracting videos for you please wait ')
+            if not for_you:
+                print(
+                    f'extracting videos with hashtag \"{hashtag}\" this will take a couple of minutes')
+            else:
+                print(f'Extracting videos for you please wait ')
 
         tiktok_hang = False
         global proxy_index
 
         # Hashtag section
-        if method_radio_button.get() == 1:
+
+        if not for_you:
 
             for _ in range(int(maximum_videos_to_extract / step_increment) + 1):
                 hashtag_ended = False
@@ -251,11 +269,15 @@ def extract_videos():
         with concurrent.futures.ProcessPoolExecutor() as executor:
 
             counter = 0
+            if from_shell:
+                like_min = sys.argv[1]
+            else:
+                like_min = like_input.get()
             urls = []
             for video in one_hashtag_videos:
                 days_since_creation = (datetime.now() - datetime.fromtimestamp(video['createTime'])).days
                 if int(days_since_creation <= days_allowed):
-                    if float(video['stats']['diggCount']) > float(like_input.get()):
+                    if float(video['stats']['diggCount']) > float(like_min):
                         counter += 1
                         name = f'{hashtag}_{video["author"]["uniqueId"]}_{video["video"]["id"]}'
 
@@ -279,12 +301,14 @@ def extract_videos():
                         videos_list.append(file_name)
 
         # Uploading downloaded videos
-        for video in videos_list:
-            time.sleep(randint(1, 5))
-            upload_video(video, proxy_index)
-            proxy_index += 1
-            if proxy_index == len(proxies):
-                proxy_index = 0
+        # for video in videos_list:
+        #     time.sleep(randint(1, 5))
+        #     upload_video(video, proxy_index)
+        #     proxy_index += 1
+        #     if proxy_index == len(proxies):
+        #         proxy_index = 0
+
+        break
 
 
 def tkinter_create_window():
@@ -339,6 +363,7 @@ def tkinter_create_window():
 
 
 if __name__ == '__main__':
+
     proxies = ['http://ghulrcuk:bad3428050@104.140.83.219:36505', 'http://ghulrcuk:bad3428050@154.16.61.23:36505',
                'http://ghulrcuk:bad3428050@23.108.47.207', 'http://ghulrcuk:bad3428050@198.46.174.117:36505',
                'http://ghulrcuk:bad3428050@107.172.246.184', 'http://ghulrcuk:bad3428050@198.46.176.105',
@@ -357,5 +382,8 @@ if __name__ == '__main__':
                ]
 
     proxy_index = randint(0, len(proxies) - 1)
+    if len(sys.argv) > 3:
 
-    tkinter_create_window()
+        extract_videos(True)
+    else:
+        tkinter_create_window()
