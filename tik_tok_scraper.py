@@ -88,7 +88,8 @@ def download_video(download_proxies, download_proxy_index, url, count,
             api = TikTokApi.get_instance(use_test_endpoints=True,
                                          proxy=download_proxies[download_proxy_index])
             print(f'Attempting to download file {file_name} using proxy {download_proxies[download_proxy_index]} ')
-            f.write(api.get_video_by_url(url, return_bytes=1))
+            f.write(api.get_video_by_url(url, return_bytes=1,
+                                         custom_verifyFp='verify_kmzg9occ_RHip8NdE_UivQ_4HrX_8Ut3_YHzx2PpD7Rzl'))
             print(f'File {file_name} downloaded successfully')
             api.clean_up()
             # break
@@ -289,10 +290,10 @@ def extract_videos(from_shell=False):
                         proxy_index += 1
                         if proxy_index == len(proxies):
                             proxy_index = 0
-                        executor.submit(download_video, proxies, proxy_index,
-                                        url, counter,
-                                        name=name,
-                                        for_you=for_you)
+                        download_video(proxies, proxy_index,
+                                       url, counter,
+                                       name=name,
+                                       for_you=for_you)
 
                         if for_you:
                             file_name = f'For_you/{name}.mp4'
