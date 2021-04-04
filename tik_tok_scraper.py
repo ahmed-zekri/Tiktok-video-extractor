@@ -204,7 +204,7 @@ def extract_videos(from_shell=False):
                         all_videos.extend(api.byHashtag(hashtag=hashtag, offset=len(all_videos),
                                                         custom_verifyFp=custom_verify))
 
-                    api.clean_up()
+                    # api.clean_up()
                     proxy_index += 1
                     if proxy_index == len(proxies):
                         proxy_index = 0
@@ -232,7 +232,7 @@ def extract_videos(from_shell=False):
                 else:
                     all_videos.extend(api.byHashtag(hashtag=hashtag, offset=len(all_videos), count=step_increment,
                                                     custom_verifyFp=custom_verify))
-                api.clean_up()
+                # api.clean_up()
                 proxy_index += 1
                 if proxy_index == len(proxies):
                     proxy_index = 0
