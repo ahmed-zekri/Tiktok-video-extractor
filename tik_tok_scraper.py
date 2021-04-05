@@ -143,10 +143,15 @@ def extract_videos(from_shell=False):
             hashtags_list = hashtag_input.get().split(',')
             for _, hashtag in enumerate(hashtags_list):
                 if _ > 0:
-                    subprocess.Popen([
-                        'python', 'tik_tok_scraper.py', like_input.get(), str(days_allowed), hashtag, blocked_user,
-                        str(_)],
-                        shell=True)
+                    subprocess.run(['python', '-m', 'venv', f'venv_{hashtag}'], shell=True)
+                    subprocess.run([f'venv_{hashtag}/Scripts/python', '-m', 'pip', 'install', 'dropbox'])
+                    subprocess.run([f'venv_{hashtag}/Scripts/python', '-m', 'pip', 'install', 'TikTokApi'])
+                    subprocess.run([f'venv_{hashtag}/Scripts/python', '-m', 'playwright', 'install'])
+                    subprocess.Popen(
+                        [f'venv_{hashtag}/Scripts/python', 'tik_tok_scraper.py', str(like_min), str(days_allowed),
+                         hashtag, blocked_user,
+                         str(_)])
+
             hashtag = hashtags_list[0]
         else:
             print('selected for you option')
@@ -347,20 +352,22 @@ def tkinter_create_window():
 
 if __name__ == '__main__':
 
-    proxies = ['http://ghulrcuk:bad3428050@104.140.83.219:36505', 'http://ghulrcuk:bad3428050@154.16.61.23:36505',
-               'http://ghulrcuk:bad3428050@23.108.47.207', 'http://ghulrcuk:bad3428050@198.46.174.117:36505',
-               'http://ghulrcuk:bad3428050@107.172.246.184', 'http://ghulrcuk:bad3428050@198.46.176.105',
-               'http://ghulrcuk:bad3428050@154.16.61.56:36505', 'http://ghulrcuk:bad3428050@107.172.225.52',
-               'http://ghulrcuk:bad3428050@192.210.194.137:36505', 'http://ghulrcuk:bad3428050@154.16.61.79',
+    proxies = ['http://ghulrcuk:bad3428050@192.227.241.105:36505', 'http://ghulrcuk:bad3428050@107.172.227.249:36505',
+               'http://ghulrcuk:bad3428050@171.22.121.42', 'http://ghulrcuk:bad3428050@23.94.32.57:36505',
+               'http://ghulrcuk:bad3428050@23.94.32.28', 'http://ghulrcuk:bad3428050@198.46.201.164',
+               'http://ghulrcuk:bad3428050@198.12.66.196:36505', 'http://ghulrcuk:bad3428050@171.22.121.131',
+               'http://ghulrcuk:bad3428050@107.172.71.71:36505', 'http://ghulrcuk:bad3428050@192.3.147.213',
 
-               'http://rcrvtkug:21d0ec259e@192.3.240.187:36505', 'http://rcrvtkug:21d0ec259e@107.174.231.174:36505',
-               'http://rcrvtkug:21d0ec259e@107.174.249.78:36505', 'http://rcrvtkug:21d0ec259e@107.174.151.237:36505',
-               'http://rcrvtkug:21d0ec259e@107.174.5.101:36505',
-               'http://rcrvtkug:21d0ec259e@107.175.90.3:36505',
-               'http://rcrvtkug:21d0ec259e@107.174.151.232:36505',
-               'http://rcrvtkug:21d0ec259e@107.175.129.23:36505',
-               'http://rcrvtkug:21d0ec259e@107.174.5.114:36505',
-               'http://rcrvtkug:21d0ec259e@107.175.90.101:36505',
+               'http://ghulrcuk:bad3428050@172.245.103.97:36505', 'http://ghulrcuk:bad3428050@107.172.227.213:36505',
+               'http://rcrvtkug:21d0ec259e@23.94.75.149:36505', 'http://rcrvtkug:21d0ec259e@198.46.174.110:36505',
+               'http://rcrvtkug:21d0ec259e@107.172.65.205:36505',
+               'http://rcrvtkug:21d0ec259e@23.94.75.134:36505',
+               'http://rcrvtkug:21d0ec259e@198.46.203.46:36505',
+               'http://rcrvtkug:21d0ec259e@192.227.253.235:36505',
+               'http://rcrvtkug:21d0ec259e@107.172.71.71:36505',
+               'http://rcrvtkug:21d0ec259e@192.3.147.213:36505',
+               'http://rcrvtkug:21d0ec259e@198.46.176.68:36505',
+               'http://rcrvtkug:21d0ec259e@172.245.242.237:36505'
 
                ]
 
