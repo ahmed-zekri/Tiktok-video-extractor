@@ -22,8 +22,8 @@ info = None
 videos_downloaded = 0
 method_radio_button = None
 
-maximum_videos_to_extract = 2
-step_increment = 1
+maximum_videos_to_extract = 10000
+step_increment = 1800
 max_retries = 2
 proxy_index = 0
 blocked_user_input = None
@@ -146,9 +146,9 @@ def extract_videos(from_shell=False):
                     if not os.path.exists(f'venv'):
                         os.makedirs(f'venv')
                     subprocess.run(['python', '-m', 'venv', f'venv/venv_{hashtag}'], shell=True)
-                    subprocess.run([f'venv_{hashtag}/Scripts/python', '-m', 'pip', 'install', 'dropbox'])
-                    subprocess.run([f'venv_{hashtag}/Scripts/python', '-m', 'pip', 'install', 'TikTokApi'])
-                    subprocess.run([f'venv_{hashtag}/Scripts/python', '-m', 'playwright', 'install'])
+                    subprocess.run([f'venv/venv_{hashtag}/Scripts/python', '-m', 'pip', 'install', 'dropbox'])
+                    subprocess.run([f'venv/venv_{hashtag}/Scripts/python', '-m', 'pip', 'install', 'TikTokApi'])
+                    subprocess.run([f'venv/venv_{hashtag}/Scripts/python', '-m', 'playwright', 'install'])
                     subprocess.Popen(
                         [f'venv/venv_{hashtag}/Scripts/python', 'tik_tok_scraper.py', str(like_min), str(days_allowed),
                          hashtag, blocked_user,
@@ -366,7 +366,7 @@ if __name__ == '__main__':
         'http://rcrvtkug:21d0ec259e@198.46.174.110:36505', 'http://rcrvtkug:21d0ec259e@107.172.65.205:36505',
         'http://ghulrcuk:bad3428050@107.172.227.249:36505', 'http://ghulrcuk:bad3428050@171.22.121.42:36505',
         'http://ghulrcuk:bad3428050@23.94.32.57:36505', 'http://ghulrcuk:bad3428050@23.94.32.28:36505',
-        'http://ghulrcuk:bad3428050@198.46.201.164:36505', 'http://ghulrcuk:bad3428050@23.94.75.134::36505',
+        'http://ghulrcuk:bad3428050@198.46.201.164:36505', 'http://ghulrcuk:bad3428050@23.94.75.134:36505',
 
         'http://ghulrcuk:bad3428050@198.12.66.196:36505', 'http://rcrvtkug:21d0ec259e@198.46.203.46:36505',
         'http://rcrvtkug:21d0ec259e@192.227.253.235:36505', 'http://ghulrcuk:bad3428050@171.22.121.131:36505',
