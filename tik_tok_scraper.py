@@ -95,24 +95,8 @@ def download_video(url,
         error = True
         print(f'Download failed reason:{str(e)}')
 
-    if error:
-        try:
-            os.remove(file_name)
-            print('Failed file removed')
-        except Exception as e:
-            print(f'Unable to delete file {str(e)}')
-    else:
-
-        try:
-            file_size = float(os.path.getsize(file_name))
-
-            if float(file_size) <= 1000:
-                os.remove(file_name)
-                print('Corrupted file removed')
-            else:
-                upload_video(file_name)
-        except Exception as e:
-            print(f'Failed removing corrupted file {str(e)}')
+    if not error:
+        upload_video(file_name)
 
 
 def extract_videos(from_shell=False):
@@ -283,6 +267,9 @@ def extract_videos(from_shell=False):
 
                     file_name = f'{hashtag}/{name}.mp4'
                     videos_list.append(file_name)
+
+    if for_you:
+        extract_videos()
 
 
 def tkinter_create_window():
