@@ -291,6 +291,9 @@ def extract_videos(from_shell=False):
 
                     file_name = f'{hashtag}/{name}.mp4'
                     videos_list.append(file_name)
+    # Retry fyp
+    if for_you:
+        extract_videos()
 
 
 def tkinter_create_window():
