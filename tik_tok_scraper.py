@@ -124,6 +124,7 @@ def extract_videos(from_shell=False):
             hashtags_list = hashtag_input.get().split(',')
             for _, hashtag in enumerate(hashtags_list):
                 if _ > 0:
+                    time.sleep(5)
                     subprocess.Popen([
                         'python', 'tik_tok_scraper.py', like_input.get(), str(days_allowed), hashtag, blocked_user,
                         str(_)],
