@@ -80,20 +80,30 @@ def download_video(url,
 
     if not os.path.exists(f'{name.split("_")[0]}'):
         os.makedirs(f'{name.split("_")[0]}')
+    hang_index = -1
+    error_index = proxy_index
     error = False
+    while True:
+        try:
+            print(f'Downloading using proxy {proxies[error_index]}')
+            subprocess.run([
+                'youtube-dl.exe', '--proxy', {proxies[error_index]}, url, '--output', f'{file_name}'],
+                check=True, )
 
-    try:
-        print(f'Downloading using proxy {proxies[proxy_index]}')
-        subprocess.run([
-            'youtube-dl.exe', '--proxy', {proxies[proxy_index]}, url, '--output', f'{file_name}'],
-            check=True, )
-
-        print(f'File {file_name} downloaded successfully')
+            print(f'File {file_name} downloaded successfully')
+            break
 
         # break
-    except Exception as e:
-        error = True
-        print(f'Download failed reason:{str(e)}')
+        except Exception as e:
+            if hang_index == -1:
+                hang_index = proxy_index
+            error_index += 1
+            print(f'Retrying with another proxy reason {e}')
+            if error_index == len(proxies):
+                error_index = 0
+            if error_index == hang_index:
+                error = True
+                break
 
     if not error:
         upload_video(file_name)
