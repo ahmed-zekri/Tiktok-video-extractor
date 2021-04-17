@@ -8,9 +8,9 @@ from datetime import datetime
 from random import randint
 from tkinter.ttk import Radiobutton
 
-import dropbox as dropbox
+# import dropbox as dropbox
 from TikTokApi import TikTokApi
-from dropbox.files import WriteMode
+# from dropbox.files import WriteMode
 
 custom_verify = 'verify_kmzg9occ_RHip8NdE_UivQ_4HrX_8Ut3_YHzx2PpD7Rzl'
 hashtag_input = None
@@ -44,23 +44,23 @@ def get_my_proxy(proxy_arg):
     return proxyDict
 
 
-def upload_video(file):
-    print(f'[Upload] Uploading {file.split("/")[1]} to dropbox using proxy {proxies[proxy_index]} please wait')
-
-    try:
-        mysesh = dropbox.create_session(1, get_my_proxy(proxies[proxy_index]))
-
-        d = dropbox.Dropbox(
-            'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct', session=mysesh)
-        with open(file, "rb") as f:
-            # upload gives you metadata about the file
-            # we want to overwite any previous version of the file
-            print(f'Attempting to upload file {file}')
-            d.files_upload(f.read(), f'/{file}', mode=dropbox.files.WriteMode.overwrite)
-            print(f'File {file.split("/")[1]} uploaded successfully')
-            # break
-    except Exception as e:
-        print(f'Upload failed reason {e}')
+# def upload_video(file):
+#     print(f'[Upload] Uploading {file.split("/")[1]} to dropbox using proxy {proxies[proxy_index]} please wait')
+#
+#     try:
+#         mysesh = dropbox.create_session(1, get_my_proxy(proxies[proxy_index]))
+#
+#         d = dropbox.Dropbox(
+#             'lxvoM1hkhw0AAAAAAAAAAajf03WF1bSYiz9Mm84B88XlhvniePTg3UDkjnuTCfct', session=mysesh)
+#         with open(file, "rb") as f:
+#             # upload gives you metadata about the file
+#             # we want to overwite any previous version of the file
+#             print(f'Attempting to upload file {file}')
+#             d.files_upload(f.read(), f'/{file}', mode=dropbox.files.WriteMode.overwrite)
+#             print(f'File {file.split("/")[1]} uploaded successfully')
+#             # break
+#     except Exception as e:
+#         print(f'Upload failed reason {e}')
 
 
 def timer(time_count, current_time):
@@ -105,8 +105,8 @@ def download_video(url,
                 error = True
                 break
 
-    if not error:
-        upload_video(file_name)
+    # if not error:
+    #     upload_video(file_name)
 
 
 def extract_videos(from_shell=False):
@@ -344,27 +344,14 @@ if __name__ == '__main__':
 
     proxies = [
 
-        'http://umhnxdxl:db70460384@23.94.177.150:36505', 'http://umhnxdxl:db70460384@107.174.143.220:36505',
-        'http://umhnxdxl:db70460384@172.245.103.125:36505', 'http://umhnxdxl:db70460384@107.174.139.141:36505',
-        'http://umhnxdxl:db70460384@192.3.126.142:36505', 'http://umhnxdxl:db70460384@107.174.143.231:36505',
-        'http://umhnxdxl:db70460384@192.3.126.146:36505', 'http://umhnxdxl:db70460384@198.23.169.86:36505',
-        'http://umhnxdxl:db70460384@23.94.177.130:36505', 'http://umhnxdxl:db70460384@23.94.177.151:36505',
-
-        'http://ghulrcuk:bad3428050@192.227.241.105:36505', 'http://rcrvtkug:21d0ec259e@23.94.75.149:36505',
-        'http://rcrvtkug:21d0ec259e@198.46.174.110:36505', 'http://rcrvtkug:21d0ec259e@107.172.65.205:36505',
-        'http://ghulrcuk:bad3428050@107.172.227.249:36505', 'http://ghulrcuk:bad3428050@171.22.121.42:36505',
-        'http://ghulrcuk:bad3428050@23.94.32.57:36505', 'http://ghulrcuk:bad3428050@23.94.32.28:36505',
-        'http://ghulrcuk:bad3428050@198.46.201.164:36505', 'http://ghulrcuk:bad3428050@23.94.75.134:36505',
-
-        'http://ghulrcuk:bad3428050@198.12.66.196:36505', 'http://rcrvtkug:21d0ec259e@198.46.203.46:36505',
-        'http://rcrvtkug:21d0ec259e@192.227.253.235:36505', 'http://ghulrcuk:bad3428050@171.22.121.131:36505',
-        'http://rcrvtkug:21d0ec259e@107.172.71.71:36505',
-
-        'http://rcrvtkug:21d0ec259e@192.3.147.213:36505',
-        'http://ghulrcuk:bad3428050@172.245.103.97:36505',
-        'http://rcrvtkug:21d0ec259e@198.46.176.68:36505',
-        'http://rcrvtkug:21d0ec259e@172.245.242.237:36505',
-        'http://ghulrcuk:bad3428050@192.3.147.213:36505',
+        'http://butternj:289XE0ky@107.173.248.120:4444', 'http://butternj:289XE0ky@138.128.15.89:4444',
+        'http://butternj:289XE0ky@192.186.157.100:4444',
+        'http://butternj:289XE0ky@198.12.72.79:4444',
+        'http://butternj:289XE0ky@198.20.179.203:4444',
+        'http://butternj:289XE0ky@23.250.108.170:4444', 'http://butternj:289XE0ky@69.58.4.139:4444',
+        'http://butternj:289XE0ky@75.127.7.138:4444',
+        'http://butternj:289XE0ky@104.227.88.63:4444',
+        'http://butternj:289XE0ky@23.250.60.104:4444',
 
     ]
 
