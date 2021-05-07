@@ -93,7 +93,6 @@ def download_video(url,
             print(f'File {file_name} downloaded successfully')
             break
 
-        # break
         except Exception as e:
             if hang_index == -1:
                 hang_index = proxy_index
@@ -354,7 +353,8 @@ if __name__ == '__main__':
         'http://rcrvtkug:21d0ec259e@198.46.174.110:36505', 'http://rcrvtkug:21d0ec259e@107.172.65.205:36505',
         'http://ghulrcuk:bad3428050@107.172.227.249:36505', 'http://ghulrcuk:bad3428050@171.22.121.42:36505',
         'http://ghulrcuk:bad3428050@23.94.32.57:36505', 'http://ghulrcuk:bad3428050@23.94.32.28:36505',
-        'http://ghulrcuk:bad3428050@198.46.201.164:36505', 'http://ghulrcuk:bad3428050@23.94.75.134:36505',
+        'http://ghulrcuk:bad3428050@198.46.201.164:36505',
+
 
         'http://ghulrcuk:bad3428050@198.12.66.196:36505', 'http://rcrvtkug:21d0ec259e@198.46.203.46:36505',
         'http://rcrvtkug:21d0ec259e@192.227.253.235:36505', 'http://ghulrcuk:bad3428050@171.22.121.131:36505',
@@ -363,8 +363,7 @@ if __name__ == '__main__':
         'http://rcrvtkug:21d0ec259e@192.3.147.213:36505',
         'http://ghulrcuk:bad3428050@172.245.103.97:36505',
         'http://rcrvtkug:21d0ec259e@198.46.176.68:36505',
-        'http://rcrvtkug:21d0ec259e@172.245.242.237:36505',
-        'http://ghulrcuk:bad3428050@192.3.147.213:36505',
+        'http://rcrvtkug:21d0ec259e@172.245.242.237:36505'
 
     ]
 
