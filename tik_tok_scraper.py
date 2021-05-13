@@ -7,10 +7,7 @@ import tkinter as tk
 from datetime import datetime
 from random import randint
 from tkinter.ttk import Radiobutton
-
-import dropbox as dropbox
-from TikTokApi import TikTokApi
-from dropbox.files import WriteMode
+import concurrent.futures
 
 custom_verify = 'verify_kmzg9occ_RHip8NdE_UivQ_4HrX_8Ut3_YHzx2PpD7Rzl'
 hashtag_input = None
@@ -339,7 +336,38 @@ def tkinter_create_window():
     window.mainloop()
 
 
+def print_progress():
+    dots = 0
+    while not installation_finished:
+        if dots == 0:
+            printed_dot = ''
+        elif dots == 1:
+            printed_dot = '.'
+        elif dots == 2:
+            printed_dot = '..'
+        else:
+            printed_dot = '...'
+
+        print(f'\rinstalling/upgrading dependencies, this can take minutes on the first run {printed_dot}', end='',
+              flush=True)
+        dots += 1
+        if dots == 4:
+            dots = 0
+        time.sleep(0.5)
+    print('\r', end='', flush=True)
+
+
 if __name__ == '__main__':
+    installation_finished = False
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(print_progress)
+        subprocess.run(['pip', 'install', '--upgrade', 'dropbox'], capture_output=True)
+        subprocess.run(['pip', 'install', '--upgrade', 'TikTokApi'], capture_output=True)
+        subprocess.run(['python ', '-m', 'playwright', 'install'], capture_output=True)
+        installation_finished = True
+    import dropbox as dropbox
+    from TikTokApi import TikTokApi
+    from dropbox.files import WriteMode
 
     proxies = [
 
@@ -354,7 +382,6 @@ if __name__ == '__main__':
         'http://ghulrcuk:bad3428050@107.172.227.249:36505', 'http://ghulrcuk:bad3428050@171.22.121.42:36505',
         'http://ghulrcuk:bad3428050@23.94.32.57:36505', 'http://ghulrcuk:bad3428050@23.94.32.28:36505',
         'http://ghulrcuk:bad3428050@198.46.201.164:36505',
-
 
         'http://ghulrcuk:bad3428050@198.12.66.196:36505', 'http://rcrvtkug:21d0ec259e@198.46.203.46:36505',
         'http://rcrvtkug:21d0ec259e@192.227.253.235:36505', 'http://ghulrcuk:bad3428050@171.22.121.131:36505',
