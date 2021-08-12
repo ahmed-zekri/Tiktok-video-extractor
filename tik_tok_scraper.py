@@ -218,10 +218,10 @@ def extract_videos(from_shell=False):
                                              proxy=proxies[proxy_index])
 
                 if for_you:
-                    all_videos.extend(api.trending(offset=len(all_videos), count=step_increment,
+                    all_videos.extend(api.by_trending(offset=len(all_videos), count=step_increment,
                                                    custom_verifyFp=custom_verify))
                 else:
-                    all_videos.extend(api.byHashtag(hashtag=hashtag, offset=len(all_videos), count=step_increment,
+                    all_videos.extend(api.by_hashtag(hashtag=hashtag, offset=len(all_videos), count=step_increment,
                                                     custom_verifyFp=custom_verify))
                 # api.clean_up()
                 proxy_index += 1
