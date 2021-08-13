@@ -131,10 +131,10 @@ def hashtag_videos_extraction(hashtag, for_you):
                                                  proxy=proxies[proxy_index])
                     previous_videos_length = len(all_videos)
                     if for_you:
-                        all_videos.extend(api.trending(offset=len(all_videos), count=100,
+                        all_videos.extend(api.by_trending(offset=len(all_videos), count=100,
                                                        custom_verifyFp=custom_verify))
                     else:
-                        all_videos.extend(api.byHashtag(hashtag=hashtag, offset=len(all_videos), count=100,
+                        all_videos.extend(api.by_hashtag(hashtag=hashtag, offset=len(all_videos), count=100,
                                                         custom_verifyFp=custom_verify))
 
                     # api.clean_up()
