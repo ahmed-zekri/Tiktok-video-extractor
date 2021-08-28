@@ -134,8 +134,8 @@ def hashtag_videos_extraction(hashtag, for_you):
                         all_videos.extend(api.trending(offset=len(all_videos), count=100,
                                                        custom_verifyFp=custom_verify))
                     else:
-                        all_videos.extend(api.byHashtag(hashtag=hashtag, offset=len(all_videos), count=100,
-                                                        custom_verifyFp=custom_verify))
+                        all_videos.extend(api.by_hashtag(hashtag=hashtag, offset=len(all_videos), count=100,
+                                                         custom_verifyFp=custom_verify))
 
                     # api.clean_up()
                     proxy_index += 1
@@ -163,8 +163,8 @@ def hashtag_videos_extraction(hashtag, for_you):
                     all_videos.extend(api.trending(offset=len(all_videos), count=step_increment,
                                                    custom_verifyFp=custom_verify))
                 else:
-                    all_videos.extend(api.byHashtag(hashtag=hashtag, offset=len(all_videos), count=step_increment,
-                                                    custom_verifyFp=custom_verify))
+                    all_videos.extend(api.by_hashtag(hashtag=hashtag, offset=len(all_videos), count=step_increment,
+                                                     custom_verifyFp=custom_verify))
                 # api.clean_up()
                 proxy_index += 1
                 if proxy_index == len(proxies):
