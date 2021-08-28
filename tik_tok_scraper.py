@@ -7,10 +7,7 @@ import tkinter as tk
 from datetime import datetime
 from random import randint
 from tkinter.ttk import Radiobutton
-
-import dropbox as dropbox
-from TikTokApi import TikTokApi
-from dropbox.files import WriteMode
+import concurrent.futures
 
 custom_verify = 'verify_kmzg9occ_RHip8NdE_UivQ_4HrX_8Ut3_YHzx2PpD7Rzl'
 hashtag_input = None
@@ -22,8 +19,8 @@ info = None
 videos_downloaded = 0
 method_radio_button = None
 
-maximum_videos_to_extract = 2
-step_increment = 1
+maximum_videos_to_extract = 5200
+step_increment = 1800
 max_retries = 2
 proxy_index = 0
 blocked_user_input = None
@@ -80,42 +77,32 @@ def download_video(url,
 
     if not os.path.exists(f'{name.split("_")[0]}'):
         os.makedirs(f'{name.split("_")[0]}')
+    hang_index = -1
+    error_index = proxy_index
     error = False
-    with open(f'{file_name}', "wb") as f:
-
-        # while True:
+    while True:
         try:
-            api = TikTokApi.get_instance(use_test_endpoints=True,
-                                         proxy=proxies[proxy_index])
-            print(f'Attempting to download file {file_name} using proxy {proxies[proxy_index]} ')
-            video_bytes = api.get_video_by_url(url, return_bytes=1,
-                                               custom_verifyFp=custom_verify)
-            f.write(video_bytes)
+            print(f'Downloading using proxy {proxies[error_index]}')
+            subprocess.run([
+                'youtube-dl.exe', '--proxy', {proxies[error_index]}, url, '--output', f'{file_name}'],
+                check=True, )
+
             print(f'File {file_name} downloaded successfully')
-            api.clean_up()
-            # break
-        except Exception as e:
-            error = True
-            print(f'Download failed reason:{str(e)}')
+            break
 
-    if error:
-        try:
-            os.remove(file_name)
-            print('Failed file removed')
         except Exception as e:
-            print(f'Unable to delete file {str(e)}')
-    else:
+            if hang_index == -1:
+                hang_index = proxy_index
+            error_index += 1
+            print(f'Retrying with another proxy reason {e}')
+            if error_index == len(proxies):
+                error_index = 0
+            if error_index == hang_index:
+                error = True
+                break
 
-        try:
-            file_size = float(os.path.getsize(file_name))
-
-            if float(file_size) <= 1000:
-                os.remove(file_name)
-                print('Corrupted file removed')
-            else:
-                upload_video(file_name)
-        except Exception as e:
-            print(f'Failed removing corrupted file {str(e)}')
+    if not error:
+        upload_video(file_name)
 
 
 def extract_videos(from_shell=False):
@@ -143,6 +130,7 @@ def extract_videos(from_shell=False):
             hashtags_list = hashtag_input.get().split(',')
             for _, hashtag in enumerate(hashtags_list):
                 if _ > 0:
+                    time.sleep(5)
                     subprocess.Popen([
                         'python', 'tik_tok_scraper.py', like_input.get(), str(days_allowed), hashtag, blocked_user,
                         str(_)],
@@ -287,6 +275,9 @@ def extract_videos(from_shell=False):
                     file_name = f'{hashtag}/{name}.mp4'
                     videos_list.append(file_name)
 
+    if for_you:
+        extract_videos()
+
 
 def tkinter_create_window():
     global days_input
@@ -345,24 +336,63 @@ def tkinter_create_window():
     window.mainloop()
 
 
+def print_progress():
+    dots = 0
+    while not installation_finished:
+        if dots == 0:
+            printed_dot = ''
+        elif dots == 1:
+            printed_dot = '.'
+        elif dots == 2:
+            printed_dot = '..'
+        else:
+            printed_dot = '...'
+
+        print(f'\rinstalling/upgrading dependencies, this can take minutes on the first run {printed_dot}', end='',
+              flush=True)
+        dots += 1
+        if dots == 4:
+            dots = 0
+        time.sleep(0.5)
+    print('\r', end='', flush=True)
+
+
 if __name__ == '__main__':
+    installation_finished = False
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.submit(print_progress)
+        subprocess.run(['pip', 'install', '--upgrade', 'dropbox'], capture_output=True)
+        subprocess.run(['pip', 'install', '--upgrade', 'TikTokApi'], capture_output=True)
+        subprocess.run(['python ', '-m', 'playwright', 'install'], capture_output=True)
+        installation_finished = True
+    import dropbox as dropbox
+    from TikTokApi import TikTokApi
+    from dropbox.files import WriteMode
 
-    proxies = ['http://ghulrcuk:bad3428050@104.140.83.219:36505', 'http://ghulrcuk:bad3428050@154.16.61.23:36505',
-               'http://ghulrcuk:bad3428050@23.108.47.207', 'http://ghulrcuk:bad3428050@198.46.174.117:36505',
-               'http://ghulrcuk:bad3428050@107.172.246.184', 'http://ghulrcuk:bad3428050@198.46.176.105',
-               'http://ghulrcuk:bad3428050@154.16.61.56:36505', 'http://ghulrcuk:bad3428050@107.172.225.52',
-               'http://ghulrcuk:bad3428050@192.210.194.137:36505', 'http://ghulrcuk:bad3428050@154.16.61.79',
+    proxies = [
 
-               'http://rcrvtkug:21d0ec259e@192.3.240.187:36505', 'http://rcrvtkug:21d0ec259e@107.174.231.174:36505',
-               'http://rcrvtkug:21d0ec259e@107.174.249.78:36505', 'http://rcrvtkug:21d0ec259e@107.174.151.237:36505',
-               'http://rcrvtkug:21d0ec259e@107.174.5.101:36505',
-               'http://rcrvtkug:21d0ec259e@107.175.90.3:36505',
-               'http://rcrvtkug:21d0ec259e@107.174.151.232:36505',
-               'http://rcrvtkug:21d0ec259e@107.175.129.23:36505',
-               'http://rcrvtkug:21d0ec259e@107.174.5.114:36505',
-               'http://rcrvtkug:21d0ec259e@107.175.90.101:36505',
+        'http://umhnxdxl:db70460384@23.94.177.150:36505', 'http://umhnxdxl:db70460384@107.174.143.220:36505',
+        'http://umhnxdxl:db70460384@172.245.103.125:36505', 'http://umhnxdxl:db70460384@107.174.139.141:36505',
+        'http://umhnxdxl:db70460384@192.3.126.142:36505', 'http://umhnxdxl:db70460384@107.174.143.231:36505',
+        'http://umhnxdxl:db70460384@192.3.126.146:36505', 'http://umhnxdxl:db70460384@198.23.169.86:36505',
+        'http://umhnxdxl:db70460384@23.94.177.130:36505', 'http://umhnxdxl:db70460384@23.94.177.151:36505',
 
-               ]
+        'http://ghulrcuk:bad3428050@192.227.241.105:36505', 'http://rcrvtkug:21d0ec259e@23.94.75.149:36505',
+        'http://rcrvtkug:21d0ec259e@198.46.174.110:36505', 'http://rcrvtkug:21d0ec259e@107.172.65.205:36505',
+        'http://ghulrcuk:bad3428050@107.172.227.249:36505', 'http://ghulrcuk:bad3428050@171.22.121.42:36505',
+        'http://ghulrcuk:bad3428050@23.94.32.57:36505', 'http://ghulrcuk:bad3428050@23.94.32.28:36505',
+        'http://ghulrcuk:bad3428050@198.46.201.164:36505',
+
+        'http://ghulrcuk:bad3428050@198.12.66.196:36505', 'http://rcrvtkug:21d0ec259e@198.46.203.46:36505',
+        'http://rcrvtkug:21d0ec259e@192.227.253.235:36505', 'http://ghulrcuk:bad3428050@171.22.121.131:36505',
+        'http://rcrvtkug:21d0ec259e@107.172.71.71:36505',
+
+        'http://rcrvtkug:21d0ec259e@192.3.147.213:36505',
+        'http://ghulrcuk:bad3428050@172.245.103.97:36505',
+        'http://rcrvtkug:21d0ec259e@198.46.176.68:36505',
+        'http://rcrvtkug:21d0ec259e@172.245.242.237:36505'
+
+    ]
 
     # executing from shell
     if len(sys.argv) > 3:
